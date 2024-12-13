@@ -52,6 +52,8 @@ pub struct Symbol {
     pub min_order_size: Decimal,
     pub step_size: Decimal,
     pub tick_size: Decimal,
+    pub step_scale: u32,
+    pub tick_scale: u32,
 }
 
 impl<'de> Deserialize<'de> for Symbol {
@@ -114,10 +116,14 @@ impl<'de> Deserialize<'de> for Symbol {
             min_order_size: Decimal::ZERO,
             step_size: Decimal::ZERO,
             tick_size: Decimal::ZERO,
+            step_scale: 0,
+            tick_scale: 0,
         };
         symbol_object.min_order_size = symbol_object.get_min_order_size();
         symbol_object.tick_size = symbol_object.get_tick_size();
         symbol_object.step_size = symbol_object.get_step_size();
+        symbol_object.step_scale = symbol_object.step_size.scale();
+        symbol_object.tick_scale = symbol_object.tick_size.scale();
         Ok(symbol_object)
     }
 }

@@ -154,17 +154,15 @@ impl Symbol {
     }
 
     pub fn round_order_size(&self, order_size: Decimal) -> Decimal {
-        let step_size = self.step_size();
-        let quotient = order_size / step_size;
+        let quotient = order_size / self.step_size;
         let floored_quotient = quotient.floor();
-        floored_quotient * step_size
+        floored_quotient * self.step_size
     }
 
     pub fn get_order_price(&self, price: Decimal) -> Decimal {
-        let tick_size = self.tick_size();
-        let quotient = price / tick_size;
+        let quotient = price / self.tick_size;
         let floored_quotient = quotient.floor();
-        floored_quotient * tick_size
+        floored_quotient * self.tick_size
     }
 }
 

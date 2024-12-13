@@ -1,5 +1,6 @@
+use rust_decimal::Decimal;
 use crate::futures::rest_model::{MarginType, OrderType, PositionSide, WorkingType};
-use crate::rest_model::{string_or_float, string_or_float_opt, ExecutionType, OrderSide, OrderStatus, TimeInForce};
+use crate::rest_model::{ExecutionType, OrderSide, OrderStatus, TimeInForce};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE", tag = "e")]
@@ -54,32 +55,32 @@ pub enum ReasonType {
 pub struct Balance {
     #[serde(rename = "a")]
     pub asset: String,
-    #[serde(rename = "wb", with = "string_or_float")]
-    pub wallet_balance: f64,
-    #[serde(rename = "cw", with = "string_or_float")]
-    pub cross_wallet_balance: f64,
-    #[serde(rename = "bc", with = "string_or_float")]
-    pub balance_change: f64,
+    #[serde(rename = "wb")]
+    pub wallet_balance: Decimal,
+    #[serde(rename = "cw")]
+    pub cross_wallet_balance: Decimal,
+    #[serde(rename = "bc")]
+    pub balance_change: Decimal,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Position {
     #[serde(rename = "s")]
     pub symbol: String,
-    #[serde(rename = "pa", with = "string_or_float")]
-    pub position_amount: f64,
-    #[serde(rename = "ep", with = "string_or_float")]
-    pub entry_price: f64,
-    #[serde(rename = "bep", with = "string_or_float")]
-    pub breakeven_price: f64,
-    #[serde(rename = "cr", with = "string_or_float")]
-    pub accumulated_realized: f64,
-    #[serde(rename = "up", with = "string_or_float")]
-    pub unrealized_profit: f64,
+    #[serde(rename = "pa")]
+    pub position_amount: Decimal,
+    #[serde(rename = "ep")]
+    pub entry_price: Decimal,
+    #[serde(rename = "bep")]
+    pub breakeven_price: Decimal,
+    #[serde(rename = "cr")]
+    pub accumulated_realized: Decimal,
+    #[serde(rename = "up")]
+    pub unrealized_profit: Decimal,
     #[serde(rename = "mt")]
     pub margin_type: MarginType,
-    #[serde(rename = "iw", with = "string_or_float")]
-    pub isolated_wallet: f64,
+    #[serde(rename = "iw")]
+    pub isolated_wallet: Decimal,
     #[serde(rename = "ps")]
     pub position_side: PositionSide,
 }
@@ -106,38 +107,38 @@ pub struct Order {
     pub order_type: OrderType,
     #[serde(rename = "f")]
     pub time_in_force: TimeInForce,
-    #[serde(rename = "q", with = "string_or_float")]
-    pub quantity: f64,
-    #[serde(rename = "p", with = "string_or_float")]
-    pub price: f64,
-    #[serde(rename = "ap", with = "string_or_float")]
-    pub average_price: f64,
-    #[serde(rename = "sp", with = "string_or_float")]
-    pub stop_price: f64,
+    #[serde(rename = "q")]
+    pub quantity: Decimal,
+    #[serde(rename = "p")]
+    pub price: Decimal,
+    #[serde(rename = "ap")]
+    pub average_price: Decimal,
+    #[serde(rename = "sp")]
+    pub stop_price: Decimal,
     #[serde(rename = "x")]
     pub execution_type: ExecutionType,
     #[serde(rename = "X")]
     pub order_status: OrderStatus,
     #[serde(rename = "i")]
     pub order_id: u64,
-    #[serde(rename = "l", with = "string_or_float")]
-    pub order_last_filled_quantity: f64,
-    #[serde(rename = "z", with = "string_or_float")]
-    pub order_filled_accumulated_quantity: f64,
-    #[serde(rename = "L", with = "string_or_float")]
-    pub last_filled_price: f64,
-    #[serde(default, rename = "n", with = "string_or_float_opt")]
-    pub commission: Option<f64>,
+    #[serde(rename = "l")]
+    pub order_last_filled_quantity: Decimal,
+    #[serde(rename = "z")]
+    pub order_filled_accumulated_quantity: Decimal,
+    #[serde(rename = "L")]
+    pub last_filled_price: Decimal,
+    #[serde(default, rename = "n")]
+    pub commission: Option<Decimal>,
     #[serde(rename = "N")]
     pub commission_asset: Option<String>,
     #[serde(rename = "T")]
     pub order_trade_time: u64,
     #[serde(rename = "t")]
     pub trade_id: u64,
-    #[serde(rename = "b", with = "string_or_float")]
-    pub bid_notional: f64,
-    #[serde(rename = "a", with = "string_or_float")]
-    pub ask_notional: f64,
+    #[serde(rename = "b")]
+    pub bid_notional: Decimal,
+    #[serde(rename = "a")]
+    pub ask_notional: Decimal,
     #[serde(rename = "m")]
     pub is_maker: bool,
     #[serde(rename = "R")]
@@ -150,14 +151,14 @@ pub struct Order {
     pub position_side: PositionSide,
     #[serde(rename = "cp")]
     pub close_position: bool,
-    #[serde(default, rename = "AP", with = "string_or_float_opt")]
-    pub activation_price: Option<f64>,
-    #[serde(default, rename = "cr", with = "string_or_float_opt")]
-    pub callback_rate: Option<f64>,
+    #[serde(default, rename = "AP")]
+    pub activation_price: Option<Decimal>,
+    #[serde(default, rename = "cr")]
+    pub callback_rate: Option<Decimal>,
     #[serde(rename = "pP")]
     pub price_protect: bool,
-    #[serde(rename = "rp", with = "string_or_float")]
-    pub realized_profit: f64,
+    #[serde(rename = "rp")]
+    pub realized_profit: Decimal,
     #[serde(rename = "V")]
     pub stp_mode: SelfTradePreventionMode,
     #[serde(rename = "pm")]

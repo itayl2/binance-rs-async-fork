@@ -5,6 +5,7 @@ use chrono::DateTime;
 use chrono::{Duration, Utc};
 use std::collections::HashMap;
 use std::ops::Sub;
+use rust_decimal::Decimal;
 
 static SAPI_V1_SYSTEM_STATUS: &str = "/sapi/v1/system/status";
 static SAPI_V1_CAPITAL_CONFIG_GETALL: &str = "/sapi/v1/capital/config/getall";
@@ -290,15 +291,16 @@ impl Wallet {
     ///
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal::Decimal;
     /// use binance::{api::*, wallet::*, config::*, rest_model::*};
     /// let wallet: Wallet = Binance::new_with_env(&Config::testnet());
-    /// let records = tokio_test::block_on(wallet.universal_transfer("BTC".to_string(), 1.0, None, None, UniversalTransferType::FundingMain));
+    /// let records = tokio_test::block_on(wallet.universal_transfer("BTC".to_string(), Decimal::ONE, None, None, UniversalTransferType::FundingMain));
     /// assert!(records.is_ok(), "{:?}", records);
     /// ```
     pub async fn universal_transfer(
         &self,
         asset: String,
-        amount: f64,
+        amount: Decimal,
         from_symbol: Option<String>,
         to_symbol: Option<String>,
         transfer_type: UniversalTransferType,

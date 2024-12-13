@@ -1,33 +1,26 @@
 use crate::client::*;
 use crate::errors::*;
-use crate::rest_model::*;
 use crate::util::*;
 use std::collections::BTreeMap;
+use rust_decimal::Decimal;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CoinInfo {
     pub coin: String,
     pub deposit_all_enable: bool,
-    #[serde(with = "string_or_float")]
-    pub free: f64,
-    #[serde(with = "string_or_float")]
-    pub freeze: f64,
-    #[serde(with = "string_or_float")]
-    pub ipoable: f64,
-    #[serde(with = "string_or_float")]
-    pub ipoing: f64,
+    pub free: Decimal,
+    pub freeze: Decimal,
+    pub ipoable: Decimal,
+    pub ipoing: Decimal,
     pub is_legal_money: bool,
-    #[serde(with = "string_or_float")]
-    pub locked: f64,
+    pub locked: Decimal,
     pub name: String,
     pub network_list: Vec<Network>,
-    #[serde(with = "string_or_float")]
-    pub storage: f64,
+    pub storage: Decimal,
     pub trading: bool,
     pub withdraw_all_enable: bool,
-    #[serde(with = "string_or_float")]
-    pub withdrawing: f64,
+    pub withdrawing: Decimal,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -51,10 +44,8 @@ pub struct Network {
     /// shown only when "withdrawEnable" is false.
     pub withdraw_desc: Option<String>,
     pub withdraw_enable: bool,
-    #[serde(with = "string_or_float")]
-    pub withdraw_fee: f64,
-    #[serde(with = "string_or_float")]
-    pub withdraw_min: f64,
+    pub withdraw_fee: Decimal,
+    pub withdraw_min: Decimal,
     // pub insert_time: Option<u64>, //commented out for now, because they are not inside the actual response (only the api doc example)
     // pub update_time: Option<u64>,
     pub withdraw_integer_multiple: Option<String>,
@@ -63,12 +54,10 @@ pub struct Network {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AssetDetail {
-    #[serde(with = "string_or_float")]
-    pub min_withdraw_amount: f64,
+    pub min_withdraw_amount: Decimal,
     /// false if ALL of networks' are false
     pub deposit_status: bool,
-    #[serde(with = "string_or_float")]
-    pub withdraw_fee: f64,
+    pub withdraw_fee: Decimal,
     /// false if ALL of networks' are false
     pub withdraw_status: bool,
     /// reason

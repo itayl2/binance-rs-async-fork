@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use crate::client::*;
 use crate::errors::*;
 use crate::rest_model::*;
@@ -46,15 +47,17 @@ impl Margin {
     /// Execute transfer between spot account and margin account.
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal::Decimal;
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
-    /// let transaction_id = tokio_test::block_on(margin.transfer("BTCUSDT", 0.001, MarginTransferType::FromMainToMargin));
+    /// let transaction_id = tokio_test::block_on(margin.transfer("BTCUSDT", dec!(0.001), MarginTransferType::FromMainToMargin));
     /// assert!(transaction_id.is_ok(), "{:?}", transaction_id);
     /// ```
     pub async fn transfer<S, F>(&self, symbol: S, qty: F, transfer_type: MarginTransferType) -> Result<TransactionId>
     where
         S: Into<String>,
-        F: Into<f64>,
+        F: Into<Decimal>,
     {
         let transfer: Transfer = Transfer {
             asset: symbol.into(),
@@ -69,9 +72,10 @@ impl Margin {
     /// Execute transfer between spot account and isolated margin account.
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
-    /// let transaction_id = tokio_test::block_on(margin.isolated_transfer("BTC", "BTC", 0.001, IsolatedMarginTransferType::Spot, IsolatedMarginTransferType::IsolatedMargin));
+    /// let transaction_id = tokio_test::block_on(margin.isolated_transfer("BTC", "BTC", dec!(0.001), IsolatedMarginTransferType::Spot, IsolatedMarginTransferType::IsolatedMargin));
     /// assert!(transaction_id.is_ok(), "{:?}", transaction_id);
     /// ```
     pub async fn isolated_transfer<S, F>(
@@ -84,7 +88,7 @@ impl Margin {
     ) -> Result<TransactionId>
     where
         S: Into<String>,
-        F: Into<f64>,
+        F: Into<Decimal>,
     {
         let transfer = IsolatedTransfer {
             asset: asset_symbol.into(),
@@ -101,15 +105,16 @@ impl Margin {
     /// Apply for a loan.
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
-    /// let transaction_id = tokio_test::block_on(margin.loan("BTCUSDT", 0.001));
+    /// let transaction_id = tokio_test::block_on(margin.loan("BTCUSDT", dec!(0.001)));
     /// assert!(transaction_id.is_ok(), "{:?}", transaction_id);
     /// ```
     pub async fn loan<S, F>(&self, symbol: S, qty: F) -> Result<TransactionId>
     where
         S: Into<String>,
-        F: Into<f64>,
+        F: Into<Decimal>,
     {
         self.loan_with_isolation(symbol, qty, None, None).await
     }
@@ -117,9 +122,10 @@ impl Margin {
     /// Apply for an isolated loan.
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
-    /// let transaction_id = tokio_test::block_on(margin.loan_with_isolation("BTCUSDT", 0.001, Some(true), Some("BNB".to_string())));
+    /// let transaction_id = tokio_test::block_on(margin.loan_with_isolation("BTCUSDT", dec!(0.001), Some(true), Some("BNB".to_string())));
     /// assert!(transaction_id.is_ok(), "{:?}", transaction_id);
     /// ```
     pub async fn loan_with_isolation<S, F>(
@@ -131,7 +137,7 @@ impl Margin {
     ) -> Result<TransactionId>
     where
         S: Into<String>,
-        F: Into<f64>,
+        F: Into<Decimal>,
     {
         let loan: Loan = Loan {
             asset: symbol.into(),
@@ -146,15 +152,16 @@ impl Margin {
 
     /// Repay loan for margin account.
     /// ```rust,no_run
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
-    /// let transaction_id = tokio_test::block_on(margin.repay("BTCUSDT", 0.001));
+    /// let transaction_id = tokio_test::block_on(margin.repay("BTCUSDT", dec!(0.001)));
     /// assert!(transaction_id.is_ok(), "{:?}", transaction_id);
     /// ```
     pub async fn repay<S, F>(&self, symbol: S, qty: F) -> Result<TransactionId>
     where
         S: Into<String>,
-        F: Into<f64>,
+        F: Into<Decimal>,
     {
         self.repay_with_isolation(symbol, qty, None, None).await
     }
@@ -162,9 +169,10 @@ impl Margin {
     /// Apply for an isolated loan.
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
-    /// let transaction_id = tokio_test::block_on(margin.repay_with_isolation("BTCUSDT", 0.001, Some(true), Some("BNB".to_string())));
+    /// let transaction_id = tokio_test::block_on(margin.repay_with_isolation("BTCUSDT", dec!(0.001), Some(true), Some("BNB".to_string())));
     /// assert!(transaction_id.is_ok(), "{:?}", transaction_id);
     /// ```
     pub async fn repay_with_isolation<S, F>(
@@ -176,7 +184,7 @@ impl Margin {
     ) -> Result<TransactionId>
     where
         S: Into<String>,
-        F: Into<f64>,
+        F: Into<Decimal>,
     {
         let loan: Loan = Loan {
             asset: symbol.into(),
@@ -192,18 +200,19 @@ impl Margin {
     /// Post a new order for margin account.
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
     /// let margin_order = MarginOrder {
     ///     symbol: "BTCUSDT".to_string(),
     ///     side: OrderSide::Sell,
     ///     order_type: OrderType::Limit,
-    ///     quantity: Some(0.001),
+    ///     quantity: Some(dec!(0.001)),
     ///     quote_order_qty: None,
-    ///     price: Some(10.0),
-    ///     stop_price: Some(10.0),
+    ///     price: Some(dec!(10.0)),
+    ///     stop_price: Some(dec!(10.0)),
     ///     new_client_order_id: Some("my_id".to_string()),
-    ///     iceberg_qty: Some(10.0),
+    ///     iceberg_qty: Some(dec!(10.0)),
     ///     new_order_resp_type: OrderResponse::Ack,
     ///     time_in_force: Some(TimeInForce::FOK),
     ///     side_effect_type: SideEffectType::NoSideEffect,
@@ -221,18 +230,19 @@ impl Margin {
     /// Post a new order for margin account.
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
     /// let margin_order = MarginOrder {
     ///     symbol: "BTCUSDT".to_string(),
     ///     side: OrderSide::Sell,
     ///     order_type: OrderType::Limit,
-    ///     quantity: Some(0.001),
+    ///     quantity: Some(dec!(0.001)),
     ///     quote_order_qty: None,
-    ///     price: Some(10.0),
-    ///     stop_price: Some(10.0),
+    ///     price: Some(dec!(10.0)),
+    ///     stop_price: Some(dec!(10.0)),
     ///     new_client_order_id: Some("my_id".to_string()),
-    ///     iceberg_qty: Some(10.0),
+    ///     iceberg_qty: Some(dec!(10.0)),
     ///     new_order_resp_type: OrderResponse::Ack,
     ///     time_in_force: Some(TimeInForce::FOK),
     ///     side_effect_type: SideEffectType::NoSideEffect,
@@ -248,14 +258,15 @@ impl Margin {
     /// Post a new order for margin account.
     /// # Examples
     /// ```rust,no_run
+    /// use rust_decimal_macros::dec;
     /// use binance::{api::*, margin::*, config::*, rest_model::*};
     /// let margin: Margin = Binance::new_with_env(&Config::testnet());
     /// let margin_order = MarginOCOOrder {
     ///     symbol: "BTCUSDT".to_string(),
     ///     side: OrderSide::Sell,
-    ///     quantity: 10.0,
-    ///     price: 10.0,
-    ///     stop_price: 1.0,
+    ///     quantity: dec!(10.0),
+    ///     price: dec!(10.0),
+    ///     stop_price: dec!(1.0),
     ///     ..MarginOCOOrder::default()
     /// };
     /// let transaction_id = tokio_test::block_on(margin.new_oco_order(margin_order));

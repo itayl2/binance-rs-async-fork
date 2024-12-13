@@ -1157,6 +1157,67 @@ pub enum OrderStatus {
     ExpiredInMatch,
 }
 
+
+impl OrderStatus {
+    pub fn get_verb(&self) -> String {
+        match self {
+            Self::New => "created".to_string(),
+            Self::PartiallyFilled => "partially filled".to_string(),
+            Self::Filled => "filled".to_string(),
+            Self::Canceled => "canceled".to_string(),
+            Self::PendingCancel => "canceled".to_string(),
+            Self::Rejected => "rejected".to_string(),
+            Self::Expired => "expired".to_string(),
+            Self::ExpiredInMatch => "expired".to_string(),
+        }
+    }
+
+    pub fn is_open(&self) -> bool {
+        Self::get_open_statuses().contains(self)
+    }
+
+    pub fn get_open_statuses() -> Vec<Self> {
+        vec![Self::New, Self::PartiallyFilled]  // TODO need to check if PartiallyFilled is correct
+    }
+
+    pub fn get_closed_statuses() -> Vec<Self> {
+        vec![Self::Filled, Self::Canceled, Self::Rejected, Self::Expired, Self::ExpiredInMatch]
+    }
+
+    pub fn get_step_number(&self) -> f64 {
+        match self {
+            Self::New => 0.0,
+            Self::Rejected => 0.5,
+            Self::PartiallyFilled => 1.0, // TODO need to check if PartiallyFilled is correct
+            Self::Filled => 2.0,
+            Self::Canceled => 2.0,
+            Self::PendingCancel => 100.0,
+            Self::Expired => 3.0,
+            Self::ExpiredInMatch => 3.0,
+        }
+    }
+
+    pub fn is_filled(&self) -> bool {
+        match self {
+            Self::Filled => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_canceled(&self) -> bool {
+        match self {
+            Self::Canceled => true,
+            Self::Expired => true,
+            Self::ExpiredInMatch => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_closed(&self) -> bool {
+        self.is_canceled() || self.is_filled()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OCOStatus {

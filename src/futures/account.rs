@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 
-use super::rest_model::{AccountBalance, AccountInformation, CanceledOrder, ChangeLeverageResponse, Order, OrderType,
-                        Position, PositionSide, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, Symbol, Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
@@ -49,7 +48,7 @@ pub struct GetOrderRequest {
     pub orig_client_order_id: Option<String>,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderRequest {
     pub symbol: String,
@@ -70,6 +69,12 @@ pub struct OrderRequest {
     #[serde(serialize_with = "serialize_opt_as_uppercase")]
     pub price_protect: Option<bool>,
     pub new_client_order_id: Option<String>,
+}
+
+impl OrderRequest {
+    pub fn set_stop_price(&mut self, raw_stop_price: Decimal, symbol: &Symbol) {
+        self.stop_price = Some(symbol.get_order_price(raw_stop_price));
+    }
 }
 
 #[derive(Serialize)]

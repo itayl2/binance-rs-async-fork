@@ -25,7 +25,7 @@ pub struct AssetDetail {
     pub auto_asset_exchange: Decimal,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Symbol {
     pub symbol: String,

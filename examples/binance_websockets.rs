@@ -1,10 +1,10 @@
 #[macro_use]
 extern crate tokio;
 
-use binance::api::*;
-use binance::userstream::*;
-use binance::websockets::*;
-use binance::ws_model::{CombinedStreamEvent, WebsocketEvent, WebsocketEventUntag};
+use binance_fork::api::*;
+use binance_fork::userstream::*;
+use binance_fork::websockets::*;
+use binance_fork::ws_model::{CombinedStreamEvent, WebsocketEvent, WebsocketEventUntag};
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
 use serde_json::from_str;

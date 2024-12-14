@@ -683,6 +683,28 @@ pub struct AccountPosition {
     pub update_time: u64,
 }
 
+impl AccountPosition {
+    pub fn get_size(&self) -> Decimal {
+        self.position_amount
+    }
+
+    pub fn get_unrealized_pnl(&self) -> Decimal {
+        self.unrealized_profit
+    }
+
+    pub fn get_side(&self) -> PositionSide {
+        self.position_side.clone()
+    }
+
+    pub fn is_short(&self) -> bool {
+        self.position_side == PositionSide::Short
+    }
+
+    pub fn get_market(&self) -> String {
+        self.symbol.clone()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountAsset {
@@ -727,6 +749,57 @@ pub struct AccountInformation {
     pub max_withdraw_amount: Decimal,
     pub assets: Vec<AccountAsset>,
     pub positions: Vec<AccountPosition>,
+}
+
+impl AccountInformation {
+    pub fn get_equity(&self) -> Decimal {
+        self.total_margin_balance
+    }
+
+    pub fn get_free_collateral(&self) -> Decimal {
+        self.available_balance
+    }
+
+    pub fn get_all_positions(&self) -> Vec<AccountPosition> {
+        self.positions.clone()
+    }
+
+    pub fn get_position(&self, symbol: &str) -> Option<AccountPosition> {
+        self.positions.iter().find(|p| p.symbol == symbol).cloned()
+    }
+
+    pub fn get_position_size(&self, symbol: &str) -> Option<Decimal> {
+        match self.get_position(symbol) {
+            Some(position) => Some(position.position_amount),
+            None => None,
+        }
+    }
+}
+
+impl Default for AccountInformation {
+    fn default() -> Self {
+        Self {
+            fee_tier: 0,
+            can_trade: false,
+            can_deposit: false,
+            can_withdraw: false,
+            update_time: 0,
+            multi_assets_margin: false,
+            total_initial_margin: Decimal::ZERO,
+            total_maintenance_margin: Decimal::ZERO,
+            total_wallet_balance: Decimal::ZERO,
+            total_unrealized_profit: Decimal::ZERO,
+            total_margin_balance: Decimal::ZERO,
+            total_position_initial_margin: Decimal::ZERO,
+            total_open_order_initial_margin: Decimal::ZERO,
+            total_cross_wallet_balance: Decimal::ZERO,
+            total_cross_unrealized_pnl: Decimal::ZERO,
+            available_balance: Decimal::ZERO,
+            max_withdraw_amount: Decimal::ZERO,
+            assets: vec![],
+            positions: vec![],
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

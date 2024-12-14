@@ -3,7 +3,7 @@ use crate::errors::*;
 use crate::futures::rest_model::*;
 use crate::rest_model::ServerTime;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FuturesGeneral {
     pub client: Client,
 }

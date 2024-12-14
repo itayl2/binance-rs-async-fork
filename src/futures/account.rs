@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
-use super::rest_model::{AccountBalance, AccountInformation, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, Symbol, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, Symbol, Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
@@ -11,7 +11,7 @@ use serde::Serializer;
 use std::fmt;
 use rust_decimal::Decimal;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FuturesAccount {
     pub client: Client,
     pub recv_window: u64,
@@ -71,9 +71,82 @@ pub struct OrderRequest {
     pub new_client_order_id: Option<String>,
 }
 
-impl OrderRequest {
+impl From<OrderRequestMandatoryClientId> for OrderRequest {
+    fn from(order: OrderRequestMandatoryClientId) -> Self {
+        Self {
+            symbol: order.symbol,
+            side: order.side,
+            position_side: order.position_side,
+            order_type: order.order_type,
+            time_in_force: order.time_in_force,
+            quantity: order.quantity,
+            reduce_only: order.reduce_only,
+            price: order.price,
+            stop_price: order.stop_price,
+            close_position: order.close_position,
+            activation_price: order.activation_price,
+            callback_rate: order.callback_rate,
+            working_type: order.working_type,
+            price_protect: order.price_protect,
+            new_client_order_id: Some(order.new_client_order_id),
+        }
+    }
+}
+
+#[derive(Serialize, Default, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderRequestMandatoryClientId {
+    pub symbol: String,
+    pub side: OrderSide,
+    pub position_side: Option<PositionSide>,
+    #[serde(rename = "type")]
+    pub order_type: OrderType,
+    pub time_in_force: Option<TimeInForce>,
+    #[serde(rename = "quantity")]
+    pub quantity: Option<Decimal>,
+    pub reduce_only: Option<bool>,
+    pub price: Option<Decimal>,
+    pub stop_price: Option<Decimal>,
+    pub close_position: Option<bool>,
+    pub activation_price: Option<Decimal>,
+    pub callback_rate: Option<Decimal>,
+    pub working_type: Option<WorkingType>,
+    #[serde(serialize_with = "serialize_opt_as_uppercase")]
+    pub price_protect: Option<bool>,
+    pub new_client_order_id: String,
+}
+
+impl OrderRequestMandatoryClientId {
+    pub fn has_stop_price(&self) -> bool {
+        self.stop_price.is_some()
+    }
+
     pub fn set_stop_price(&mut self, raw_stop_price: Decimal, symbol: &Symbol) {
         self.stop_price = Some(symbol.get_order_price(raw_stop_price));
+    }
+
+    pub fn set_size(&mut self, size: Decimal) {
+        self.quantity = Some(size);
+    }
+
+    pub fn get_size(&self) -> Decimal {
+        self.quantity.unwrap_or(Decimal::ZERO)
+    }
+
+    pub fn get_price(&self) -> Decimal {
+        self.price.unwrap_or(Decimal::ZERO)
+    }
+
+    pub fn get_market(&self) -> String {
+        self.symbol.clone()
+    }
+
+    pub fn get_client_id(&self) -> String {
+        self.new_client_order_id.clone()
+    }
+
+    pub fn set_client_id(&mut self, client_id: String) {
+        self.new_client_order_id = client_id;
     }
 }
 
@@ -86,7 +159,7 @@ struct ChangePositionModeRequest {
 
 impl FuturesAccount {
     /// Get an order
-    pub async fn get_order(&self, order: Option<GetOrderRequest>) -> Result<Transaction> {
+    pub async fn get_order(&self, order: Option<GetOrderRequest>) -> Result<Order> {
         self.client
             .get_signed_p("/fapi/v1/order", order, self.recv_window)
             .await
@@ -100,8 +173,11 @@ impl FuturesAccount {
     }
 
     /// Get currently open orders
-    pub async fn get_open_orders(&self, symbol: impl Into<String>) -> Result<Vec<Order>> {
-        let payload = build_signed_request_p(PairQuery { symbol: symbol.into() }, self.recv_window)?;
+    pub async fn get_open_orders(&self, symbol: Option<impl Into<String>>) -> Result<Vec<Order>> {
+        let payload = match symbol {
+            Some(symbol) => build_signed_request_p(PairQuery { symbol: symbol.into() }, self.recv_window)?,
+            None => build_signed_request_p(HashMap::new(), self.recv_window)?,
+        };
         self.client.get_signed("/fapi/v1/openOrders", &payload).await
     }
 
@@ -116,6 +192,16 @@ impl FuturesAccount {
         self.client
             .post_signed_p("/fapi/v1/order/test", order, self.recv_window)
             .await
+    }
+
+    /// Get account trades
+    pub async fn get_account_trades(&self, symbol: impl Into<String>, order_id: Option<u64>) -> Result<Vec<AccountTrade>> {
+        let mut data: HashMap<String, String> = HashMap::from([("symbol".to_string(), symbol.into())]);
+        if let Some(order_id) = order_id {
+            data.insert("orderId".to_string(), order_id.to_string());
+        }
+        let payload = build_signed_request_p(data, self.recv_window)?;
+        self.client.get_signed("/fapi/v1/userTrades", &payload).await
     }
 
     /// Place a limit buy order

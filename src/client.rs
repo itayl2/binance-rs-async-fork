@@ -12,7 +12,7 @@ use crate::errors::error_messages;
 use crate::errors::*;
 use crate::util::{build_request_p, build_signed_request_p};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Client {
     api_key: String,
     secret_key: String,

@@ -68,4 +68,7 @@ pub mod error_messages {
     pub const INVALID_PRICE: &str = "Invalid price.";
 }
 
+unsafe impl Send for Error {}
+
 pub type Result<T> = core::result::Result<T, Error>;
+// pub type ResultWithSend<T> = core::result::Result<T, BinanceErrorWithSend>;

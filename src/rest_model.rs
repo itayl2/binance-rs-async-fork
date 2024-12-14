@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::HashMap;
 use rust_decimal::Decimal;
+use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -418,7 +419,7 @@ pub struct Loan {
 }
 
 /// How long will an order stay alive
-#[derive(Eq, PartialEq, Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 pub enum TimeInForce {
     /// Good Till Canceled
     GTC,
@@ -452,7 +453,7 @@ pub enum SideEffectType {
     Other,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderSide {
     Buy,
@@ -487,7 +488,7 @@ impl Default for CancelReplaceMode {
 /// MARKET orders using quantity specifies how much a user wants to buy or sell based on the market price.
 /// MARKET orders using quoteOrderQty specifies the amount the user wants to spend (when buying) or receive (when selling) of the quote asset; the correct quantity will be determined based on the market liquidity and quoteOrderQty.
 /// MARKET orders using quoteOrderQty will not break LOT_SIZE filter rules; the order will execute a quantity that will have the notional value as close as possible to quoteOrderQty.
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderType {
     Limit,
@@ -1136,7 +1137,7 @@ pub enum ExecutionType {
 }
 
 /// Status of an order, this can typically change over time
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, Eq, PartialEq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderStatus {
     /// The order has been accepted by the engine.
@@ -1159,6 +1160,10 @@ pub enum OrderStatus {
 
 
 impl OrderStatus {
+    pub fn first() -> Self {
+        Self::New
+    }
+    
     pub fn get_verb(&self) -> String {
         match self {
             Self::New => "created".to_string(),

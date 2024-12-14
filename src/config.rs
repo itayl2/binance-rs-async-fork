@@ -1,6 +1,6 @@
 pub static DATA_REST_ENDPOINT: &str = "https://api.binance.com";
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Config {
     pub rest_api_endpoint: String,
     pub ws_endpoint: String,

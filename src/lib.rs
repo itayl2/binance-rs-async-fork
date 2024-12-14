@@ -90,3 +90,4 @@ pub mod userstream;
 pub mod wallet;
 pub mod websockets;
 pub mod ws_model;
+pub mod error_with_send;

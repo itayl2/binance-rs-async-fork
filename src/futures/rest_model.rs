@@ -4,6 +4,8 @@ pub use crate::rest_model::{string_or_u64, Asks, Bids, BookTickers, KlineSummari
                             OrderSide, OrderStatus, RateLimit, ServerTime, SymbolPrice, SymbolStatus, Tickers,
                             TimeInForce};
 use serde::{Deserialize, Deserializer, Serialize};
+use chrono::{DateTime, Utc, TimeZone};
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -197,6 +199,33 @@ pub enum OrderType {
     TakeProfit,
     TakeProfitMarket,
     TrailingStopMarket,
+}
+
+impl OrderType {
+    pub fn requires_trigger_price(&self) -> bool {
+        match self {
+            OrderType::Stop => true,
+            OrderType::StopMarket => true,
+            OrderType::TakeProfit => true,
+            OrderType::TakeProfitMarket => true,
+            OrderType::TrailingStopMarket => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_stop_values() -> Vec<OrderType> {
+        vec![
+            OrderType::Stop,
+            OrderType::StopMarket,
+        ]
+    }
+
+    pub fn get_take_profit_values() -> Vec<OrderType> {
+        vec![
+            OrderType::TakeProfit,
+            OrderType::TakeProfitMarket,
+        ]
+    }
 }
 
 /// By default, use market orders
@@ -396,6 +425,24 @@ pub struct OpenInterest {
     pub symbol: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AccountTrade {
+    pub symbol: String,
+    pub id: u64,
+    pub order_id: u64,
+    pub side: OrderSide,
+    pub price: Decimal,
+    pub qty: Decimal,
+    pub realized_pnl: Decimal,
+    pub quote_qty: Decimal,
+    pub commission: Decimal,
+    pub commission_asset: String,
+    pub time: u64,
+    pub position_side: PositionSide,
+    pub maker: bool,
+    pub buyer: bool,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Order {
@@ -425,6 +472,106 @@ pub struct Order {
     pub update_time: u64,
     pub working_type: WorkingType,
     pub price_protect: bool,
+    #[serde(default)]
+    pub good_till_date: Option<i64>,
+    #[serde(default)]
+    pub time: Option<u64>,
+}
+
+impl Order {
+    pub fn get_close_position(&self) -> bool {
+        self.close_position
+    }
+    
+    pub fn get_stop_price(&self) -> Option<Decimal> {
+        match self.stop_price == Decimal::ZERO {
+            true => None,
+            false => Some(self.stop_price),
+        }
+    }
+
+    pub fn get_size(&self) -> Decimal {
+        self.orig_qty
+    }
+
+    pub fn get_price(&self) -> Decimal {
+        self.price
+    }
+
+    pub fn get_client_id(&self) -> String {
+        self.client_order_id.clone()
+    }
+
+    pub fn get_order_id(&self) -> String {
+        self.order_id.to_string()
+    }
+
+    pub fn get_market(&self) -> String {
+        self.symbol.clone()
+    }
+
+    pub fn get_updated_at_as_rfc_string(&self) -> Option<String> {
+        let datetime: DateTime<Utc> = match Utc.timestamp_millis_opt(self.update_time as i64) {
+            Ok(datetime) => datetime,
+            Err(_) => return None,
+        };
+
+        // Convert DateTime to RFC 3339 string
+        Some(datetime.to_rfc3339())
+    }
+
+    pub fn get_remaining_size(&self) -> Decimal {
+        self.orig_qty - self.executed_qty
+    }
+
+    pub fn get_total_filled(&self) -> Decimal {
+        self.executed_qty
+    }
+
+    pub fn get_filled_price_or_submitted_price(&self) -> Decimal {
+        match self.avg_price == Decimal::ZERO {
+            true => self.price,
+            false => self.avg_price,
+        }
+    }
+
+    pub fn get_optional_filled_price(&self) -> Option<Decimal> {
+        match self.avg_price == Decimal::ZERO {
+            true => None,
+            false => Some(self.avg_price),
+        }
+    }
+}
+
+impl Default for Order {
+    fn default() -> Self {
+        Self {
+            client_order_id: String::new(),
+            cum_quote: Decimal::ZERO,
+            executed_qty: Decimal::ZERO,
+            order_id: 0,
+            avg_price: Decimal::ZERO,
+            orig_qty: Decimal::ZERO,
+            price: Default::default(),
+            side: OrderSide::default(),
+            reduce_only: false,
+            position_side: PositionSide::Both,
+            status: OrderStatus::New,
+            stop_price: Default::default(),
+            close_position: false,
+            symbol: "".to_string(),
+            time_in_force: TimeInForce::GTC,
+            order_type: Default::default(),
+            orig_type: OrderType::Limit,
+            activate_price: Decimal::ZERO,
+            price_rate: Decimal::ZERO,
+            update_time: 0,
+            working_type: WorkingType::MarkPrice,
+            price_protect: false,
+            good_till_date: None,
+            time: None,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

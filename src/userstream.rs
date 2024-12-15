@@ -14,7 +14,7 @@ impl UserStream {
     /// Get a listen key for the stream
     /// # Examples
     /// ```rust,no_run
-    /// use binance::{api::*, userstream::*, config::*};
+    /// use binance_fork::{api::*, userstream::*, config::*};
     /// let userstream: UserStream = Binance::new_with_env(&Config::testnet());
     /// let start = tokio_test::block_on(userstream.start());
     /// assert!(start.is_ok(), "{:?}", start);
@@ -25,7 +25,7 @@ impl UserStream {
     /// Keep the connection alive, as the listen key becomes invalid after 60mn
     /// # Examples
     /// ```rust,no_run
-    /// use binance::{api::*, userstream::*, config::*};
+    /// use binance_fork::{api::*, userstream::*, config::*};
     /// let userstream: UserStream = Binance::new_with_env(&Config::testnet());
     /// let start = tokio_test::block_on(userstream.start());
     /// assert!(start.is_ok(), "{:?}", start);
@@ -39,7 +39,7 @@ impl UserStream {
     /// Invalidate the listen key
     /// # Examples
     /// ```rust,no_run
-    /// use binance::{api::*, userstream::*, config::*};
+    /// use binance_fork::{api::*, userstream::*, config::*};
     /// let userstream: UserStream = Binance::new_with_env(&Config::testnet());
     /// let start = tokio_test::block_on(userstream.start());
     /// assert!(start.is_ok(), "{:?}", start);

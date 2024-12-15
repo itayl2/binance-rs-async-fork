@@ -447,12 +447,12 @@ pub struct OrderUpdate {
     #[serde(rename = "O")]
     pub order_creation_time: u64,
     #[serde(rename = "Z")]
-        pub cumulative_quote_asset_transacted_qty: Decimal,
+    pub cumulative_quote_asset_transacted_qty: Decimal,
     /// (i.e. lastPrice * lastQty)
     #[serde(rename = "Y")]
-        pub last_quote_asset_transacted_qty: Decimal,
+    pub last_quote_asset_transacted_qty: Decimal,
     #[serde(rename = "Q")]
-        pub quote_order_qty: Decimal,
+    pub quote_order_qty: Decimal,
 }
 
 /// For OCO Events

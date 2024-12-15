@@ -1,6 +1,6 @@
 pub static DATA_REST_ENDPOINT: &str = "https://api.binance.com";
 
-#[derive(Debug, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Config {
     pub rest_api_endpoint: String,
     pub ws_endpoint: String,
@@ -19,7 +19,7 @@ impl Config {
     /// Configure binance with all testnet endpoints
     /// # Examples
     /// ```
-    /// use binance::config::Config;
+    /// use binance_fork::config::Config;
     /// let config = Config::testnet();
     /// ```
     pub fn testnet() -> Config {

@@ -92,11 +92,11 @@ pub struct OrderTradeUpdate {
     #[serde(rename = "T")]
     pub transaction_time: u64,
     #[serde(rename = "o")]
-    pub order: Order,
+    pub order: WebsocketOrder,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct Order {
+pub struct WebsocketOrder {
     #[serde(rename = "s")]
     pub symbol: String,
     #[serde(rename = "c")]

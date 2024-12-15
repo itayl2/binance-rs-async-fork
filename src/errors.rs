@@ -70,5 +70,12 @@ pub mod error_messages {
 
 unsafe impl Send for Error {}
 
+impl From<anyhow::Error> for Error {
+    fn from(err: anyhow::Error) -> Self {
+        Error::Msg(err.to_string())
+    }
+}
+
 pub type Result<T> = core::result::Result<T, Error>;
 // pub type ResultWithSend<T> = core::result::Result<T, BinanceErrorWithSend>;
+

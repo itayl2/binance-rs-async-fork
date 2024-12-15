@@ -1,11 +1,15 @@
+use anyhow::anyhow;
+use strum_macros::{Display, EnumString};
 use rust_decimal::Decimal;
 use crate::rest_model::string_or_bool;
 pub use crate::rest_model::{string_or_u64, Asks, Bids, BookTickers, KlineSummaries, KlineSummary,
                             OrderSide, OrderStatus, RateLimit, ServerTime, SymbolPrice, SymbolStatus, Tickers,
                             TimeInForce};
 use serde::{Deserialize, Deserializer, Serialize};
-use chrono::{DateTime, Utc, TimeZone};
-
+use chrono::{DateTime, Utc, TimeZone, MappedLocalTime};
+use rust_decimal::prelude::ToPrimitive;
+use crate::futures::ws_model::{OrderTradeUpdate, WebsocketOrder};
+use crate::errors::Result as WrappedResult;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -189,7 +193,7 @@ pub enum ContractType {
     Empty,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Display, EnumString, PartialEq, Eq, Debug, Clone, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderType {
     Limit,
@@ -233,7 +237,7 @@ impl Default for OrderType {
     fn default() -> Self { Self::Market }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Display, EnumString, PartialEq, Eq, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PositionSide {
     Both,
@@ -443,7 +447,7 @@ pub struct AccountTrade {
     pub buyer: bool,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Order {
     pub client_order_id: String,
@@ -479,6 +483,10 @@ pub struct Order {
 }
 
 impl Order {
+    pub fn get_status_step_number(&self) -> f64 {
+        self.status.get_step_number()
+    }
+    
     pub fn get_close_position(&self) -> bool {
         self.close_position
     }
@@ -506,14 +514,18 @@ impl Order {
         self.order_id.to_string()
     }
 
+    pub fn get_raw_order_id(&self) -> u64 {
+        self.order_id
+    }
+
     pub fn get_market(&self) -> String {
         self.symbol.clone()
     }
 
     pub fn get_updated_at_as_rfc_string(&self) -> Option<String> {
         let datetime: DateTime<Utc> = match Utc.timestamp_millis_opt(self.update_time as i64) {
-            Ok(datetime) => datetime,
-            Err(_) => return None,
+            MappedLocalTime::Single(datetime) => datetime,
+            _ =>return None,
         };
 
         // Convert DateTime to RFC 3339 string
@@ -539,6 +551,109 @@ impl Order {
         match self.avg_price == Decimal::ZERO {
             true => None,
             false => Some(self.avg_price),
+        }
+    }
+
+    pub fn is_closed(&self) -> bool {
+        self.status.is_closed()
+    }
+
+    pub fn is_filled(&self) -> bool {
+        self.status.is_filled()
+    }
+
+    pub fn get_store_key(&self) -> String {
+        self.get_order_id()
+    }
+
+    pub fn get_updated_timestamp(&self) -> Option<i64> {
+        Some(self.update_time as i64)
+    }
+
+    pub fn snippet(&self) -> String {
+        format!("{}:::{}:::{}", self.get_order_id(), self.side, self.status)
+    }
+
+    pub fn new_copy_size_makes_sense(&self, order: &Order) -> bool {
+        order.get_remaining_size() <= self.get_remaining_size()
+    }
+
+    pub fn websocket_order_new_copy_size_makes_sense(&self, order_remaining_size: Decimal) -> bool {
+        order_remaining_size <= self.get_remaining_size()
+    }
+
+    pub fn status_makes_sense(&self, order: &Order) -> WrappedResult<()> {
+        let (current_step_number, submitted_step_number) = (self.status.get_step_number(), order.status.get_step_number());
+        if submitted_step_number < current_step_number {
+            return Err(anyhow!("Order status step number is lower than current step number. self: {self:?}. Order: {order:?}").into())
+        }
+
+        if submitted_step_number == current_step_number && self.status != order.status {
+            return Err(anyhow!("Order status step number equal but status is different, we do not know of a scenario where this would happen. self: {self:?}. Order: {order:?}").into())
+        }
+        Ok(())
+    }
+
+    pub fn websocket_order_status_makes_sense(&self, order: &WebsocketOrder) -> WrappedResult<()> {
+        let (current_step_number, submitted_step_number) = (self.status.get_step_number(), order.order_status.get_step_number());
+        if submitted_step_number < current_step_number {
+            return Err(anyhow!("Order status step number is lower than current step number. self: {self:?}. Order: {order:?}").into())
+        }
+
+        if submitted_step_number == current_step_number && self.status != order.order_status {
+            return Err(anyhow!("Order status step number equal but status is different, we do not know of a scenario where this would happen. self: {self:?}. Order: {order:?}").into())
+        }
+        Ok(())
+    }
+
+    pub fn get_filled_usd_amount(&self) -> Decimal {
+        self.avg_price * self.executed_qty
+    }
+
+    pub fn is_buy(&self) -> bool {
+        self.side == OrderSide::Buy
+    }
+
+    pub fn filled_size(&self) -> Decimal {
+        self.executed_qty
+    }
+
+    pub fn get_updated_timestamp_or_default(&self) -> i64 {
+        self.update_time as i64
+    }
+}
+
+impl From<Box<OrderTradeUpdate>> for Order {
+    fn from(order_trade_update: Box<OrderTradeUpdate>) -> Self {
+        let order = order_trade_update.order;
+        Self {
+            client_order_id: order.client_order_id,
+            cum_quote: Decimal::ZERO,
+            executed_qty: order.order_filled_accumulated_quantity,
+            order_id: order.order_id,
+            avg_price: order.average_price,
+            orig_qty: order.quantity,
+            price: order.price,
+            side: order.side,
+            reduce_only: order.is_reduce,
+            position_side: order.position_side,
+            status: order.order_status,
+            stop_price: order.stop_price,
+            close_position: order.close_position,
+            symbol: order.symbol,
+            time_in_force: order.time_in_force,
+            order_type: order.order_type,
+            orig_type: order.original_order_type,
+            activate_price: order.activation_price.unwrap_or_default(),
+            price_rate: Decimal::ZERO,
+            update_time: order_trade_update.event_time,
+            working_type: order.working_type,
+            price_protect: order.price_protect,
+            good_till_date: match order.good_till_date == 0 {
+                true => None,
+                false => Some(order.good_till_date.to_i64().unwrap()),
+            },
+            time: Some(order_trade_update.event_time),
         }
     }
 }
@@ -752,6 +867,10 @@ pub struct AccountInformation {
 }
 
 impl AccountInformation {
+    pub fn get_asset_balance(&self, asset: &str) -> Decimal {
+        self.assets.iter().find(|a| a.asset == asset).map(|a| a.wallet_balance).unwrap_or_default()
+    }
+
     pub fn get_equity(&self) -> Decimal {
         self.total_margin_balance
     }

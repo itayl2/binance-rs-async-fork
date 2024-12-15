@@ -93,7 +93,7 @@ impl From<OrderRequestMandatoryClientId> for OrderRequest {
     }
 }
 
-#[derive(Serialize, Default, Clone, Debug)]
+#[derive(Serialize, Default, Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderRequestMandatoryClientId {
     pub symbol: String,
@@ -174,9 +174,10 @@ impl FuturesAccount {
 
     /// Get currently open orders
     pub async fn get_open_orders(&self, symbol: Option<impl Into<String>>) -> Result<Vec<Order>> {
+        let dummy_hashmap: HashMap<String, String> = HashMap::new();
         let payload = match symbol {
             Some(symbol) => build_signed_request_p(PairQuery { symbol: symbol.into() }, self.recv_window)?,
-            None => build_signed_request_p(HashMap::new(), self.recv_window)?,
+            None => build_signed_request_p(dummy_hashmap, self.recv_window)?,
         };
         self.client.get_signed("/fapi/v1/openOrders", &payload).await
     }

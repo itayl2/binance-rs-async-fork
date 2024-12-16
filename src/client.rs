@@ -134,6 +134,7 @@ impl Client {
             .map(|s| format!("{}{}?symbol={}", self.host, endpoint, s))
             .unwrap_or_else(|| format!("{}{}", self.host, endpoint));
 
+        // println!("client::post url: {url}");
         let response = self.inner.post(url).headers(self.build_headers(false)?).send().await?;
 
         self.handler(response).await

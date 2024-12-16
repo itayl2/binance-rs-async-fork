@@ -50,7 +50,7 @@ pub struct Symbol {
     pub quote_precision: u64,
     pub underlying_type: String,
     pub underlying_sub_type: Vec<String>,
-    pub settle_plan: u64,
+    pub settle_plan: Option<u64>,
     pub trigger_protect: Decimal,
     pub filters: Vec<Filters>,
     pub order_types: Vec<OrderType>,
@@ -87,7 +87,7 @@ impl<'de> Deserialize<'de> for Symbol {
             pub quote_precision: u64,
             pub underlying_type: String,
             pub underlying_sub_type: Vec<String>,
-            pub settle_plan: u64,
+            pub settle_plan: Option<u64>,
             pub trigger_protect: Decimal,
             pub filters: Vec<Filters>,
             pub order_types: Vec<OrderType>,
@@ -486,7 +486,7 @@ impl Order {
     pub fn get_status_step_number(&self) -> f64 {
         self.status.get_step_number()
     }
-    
+
     pub fn get_close_position(&self) -> bool {
         self.close_position
     }

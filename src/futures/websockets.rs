@@ -104,6 +104,7 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
     /// Connect to a websocket endpoint
     pub async fn connect(&mut self, endpoint: &str) -> Result<()> {
         let wss: String = format!("{}/{}/{}", self.conf.futures_ws_endpoint, WS_ENDPOINT, endpoint);
+        // println!("WSS URL: {wss}");
         let url = Url::parse(&wss)?;
 
         self.handle_connect(url).await
@@ -136,16 +137,36 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
             if let Some((ref mut socket, _)) = self.socket {
                 // TODO: return error instead of panic?
                 let message = socket.next().await.unwrap()?;
+                // let message = match socket.next().await {
+                //     Ok(msg) => msg,
+                //     Err(error) => {
+                //         return Err(Error::Msg(format!("Error during websocket event loop when calling next on socket {error:?}")));
+                //     }
+                // };
 
                 match message {
                     Message::Text(msg) => {
+                        // println!("WE GOT TEXT: {msg}");
                         if msg.is_empty() {
                             return Ok(());
                         }
                         let event: WE = from_str(msg.as_str())?;
                         (self.handler)(event)?;
                     }
-                    Message::Ping(_) | Message::Pong(_) | Message::Binary(_) | Message::Frame(_) => {}
+                    Message::Ping(_) => {
+                        // println!("WE GOT PING");
+                        let event: WE = from_str(r#"{"e":"PING"}"#)?;
+                        (self.handler)(event)?;
+                    }
+                    Message::Pong(_)  => {
+                        // println!("WE GOT PONG");
+                    }
+                    Message::Binary(_) => {
+                        // println!("WE GOT BINARY");
+                    }
+                    Message::Frame(_) => {
+                        // println!("WE GOT FRAME");
+                    }
                     Message::Close(e) => {
                         return Err(Error::Msg(format!("Disconnected {e:?}")));
                     }

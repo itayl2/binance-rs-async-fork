@@ -7,6 +7,7 @@ use crate::rest_model::{ExecutionType, OrderSide, OrderStatus, TimeInForce};
 pub enum WebsocketEvent {
     AccountUpdate(Box<AccountUpdate>),
     OrderTradeUpdate(Box<OrderTradeUpdate>),
+    Ping,
 }
 
 #[derive(Debug, Deserialize)]

@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 
-use super::rest_model::{AccountBalance, AccountInformation, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, Symbol, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, Symbol, Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
@@ -341,6 +341,13 @@ impl FuturesAccount {
         // needs to be changed to smth better later
         let payload = build_signed_request(BTreeMap::<String, String>::new(), self.recv_window)?;
         self.client.get_signed_d("/fapi/v2/account", &payload).await
+    }
+
+    // but its positions are missing entry_price which we need
+    pub async fn account_information_v3(&self) -> Result<AccountInformationV3> {
+        // needs to be changed to smth better later
+        let payload = build_signed_request(BTreeMap::<String, String>::new(), self.recv_window)?;
+        self.client.get_signed_d("/fapi/v3/account", &payload).await
     }
 
     /// Return account's [`AccountBalance`]

@@ -822,6 +822,46 @@ impl AccountPosition {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct AccountPositionV3 {
+    pub symbol: String,
+    pub initial_margin: Decimal,
+    #[serde(rename = "maintMargin")]
+    pub maintenance_margin: Decimal,
+    pub unrealized_profit: Decimal,
+    pub position_initial_margin: Decimal,
+    pub isolated_margin: Decimal,
+    pub notional: Decimal,
+    pub isolated_wallet: Decimal,
+    pub position_side: PositionSide,
+    #[serde(rename = "positionAmt")]
+    pub position_amount: Decimal,
+    pub update_time: u64,
+}
+
+impl AccountPositionV3 {
+    pub fn get_size(&self) -> Decimal {
+        self.position_amount
+    }
+
+    pub fn get_unrealized_pnl(&self) -> Decimal {
+        self.unrealized_profit
+    }
+
+    pub fn get_side(&self) -> PositionSide {
+        self.position_side.clone()
+    }
+
+    pub fn is_short(&self) -> bool {
+        self.position_side == PositionSide::Short
+    }
+
+    pub fn get_market(&self) -> String {
+        self.symbol.clone()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AccountAsset {
     pub asset: String,
     pub wallet_balance: Decimal,
@@ -837,6 +877,25 @@ pub struct AccountAsset {
     pub available_balance: Decimal,
     pub max_withdraw_amount: Decimal,
     pub margin_available: bool,
+    pub update_time: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountAssetV3 {
+    pub asset: String,
+    pub wallet_balance: Decimal,
+    pub unrealized_profit: Decimal,
+    pub margin_balance: Decimal,
+    pub maint_margin: Decimal,
+    pub initial_margin: Decimal,
+    pub position_initial_margin: Decimal,
+    pub open_order_initial_margin: Decimal,
+    pub cross_wallet_balance: Decimal,
+    #[serde(rename = "crossUnPnl")]
+    pub cross_unrealized_pnl: Decimal,
+    pub available_balance: Decimal,
+    pub max_withdraw_amount: Decimal,
     pub update_time: u64,
 }
 
@@ -904,6 +963,75 @@ impl Default for AccountInformation {
             can_withdraw: false,
             update_time: 0,
             multi_assets_margin: false,
+            total_initial_margin: Decimal::ZERO,
+            total_maintenance_margin: Decimal::ZERO,
+            total_wallet_balance: Decimal::ZERO,
+            total_unrealized_profit: Decimal::ZERO,
+            total_margin_balance: Decimal::ZERO,
+            total_position_initial_margin: Decimal::ZERO,
+            total_open_order_initial_margin: Decimal::ZERO,
+            total_cross_wallet_balance: Decimal::ZERO,
+            total_cross_unrealized_pnl: Decimal::ZERO,
+            available_balance: Decimal::ZERO,
+            max_withdraw_amount: Decimal::ZERO,
+            assets: vec![],
+            positions: vec![],
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountInformationV3 {
+    pub total_initial_margin: Decimal,
+    #[serde(rename = "totalMaintMargin")]
+    pub total_maintenance_margin: Decimal,
+    pub total_wallet_balance: Decimal,
+    pub total_unrealized_profit: Decimal,
+    pub total_margin_balance: Decimal,
+    pub total_position_initial_margin: Decimal,
+    pub total_open_order_initial_margin: Decimal,
+    pub total_cross_wallet_balance: Decimal,
+    #[serde(rename = "totalCrossUnPnl")]
+    pub total_cross_unrealized_pnl: Decimal,
+    pub available_balance: Decimal,
+    pub max_withdraw_amount: Decimal,
+    pub assets: Vec<AccountAssetV3>,
+    pub positions: Vec<AccountPositionV3>,
+}
+
+impl AccountInformationV3 {
+    pub fn get_asset_balance(&self, asset: &str) -> Decimal {
+        self.assets.iter().find(|a| a.asset == asset).map(|a| a.wallet_balance).unwrap_or_default()
+    }
+
+    pub fn get_equity(&self) -> Decimal {
+        self.total_margin_balance
+    }
+
+    pub fn get_free_collateral(&self) -> Decimal {
+        self.available_balance
+    }
+
+    pub fn get_all_positions(&self) -> Vec<AccountPositionV3> {
+        self.positions.clone()
+    }
+
+    pub fn get_position(&self, symbol: &str) -> Option<AccountPositionV3> {
+        self.positions.iter().find(|p| p.symbol == symbol).cloned()
+    }
+
+    pub fn get_position_size(&self, symbol: &str) -> Option<Decimal> {
+        match self.get_position(symbol) {
+            Some(position) => Some(position.position_amount),
+            None => None,
+        }
+    }
+}
+
+impl Default for AccountInformationV3 {
+    fn default() -> Self {
+        Self {
             total_initial_margin: Decimal::ZERO,
             total_maintenance_margin: Decimal::ZERO,
             total_wallet_balance: Decimal::ZERO,

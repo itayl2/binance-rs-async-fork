@@ -106,6 +106,7 @@ pub struct OrderRequestMandatoryClientId {
     pub quantity: Option<Decimal>,
     pub reduce_only: Option<bool>,
     pub price: Option<Decimal>,
+    pub intended_price: Decimal,
     pub stop_price: Option<Decimal>,
     pub close_position: Option<bool>,
     pub activation_price: Option<Decimal>,
@@ -147,6 +148,10 @@ impl OrderRequestMandatoryClientId {
 
     pub fn set_client_id(&mut self, client_id: String) {
         self.new_client_order_id = client_id;
+    }
+    
+    pub fn get_intended_price(&self) -> Decimal {
+        self.intended_price
     }
 }
 

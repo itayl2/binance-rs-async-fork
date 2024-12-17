@@ -7,7 +7,36 @@ use crate::rest_model::{ExecutionType, OrderSide, OrderStatus, TimeInForce};
 pub enum WebsocketEvent {
     AccountUpdate(Box<AccountUpdate>),
     OrderTradeUpdate(Box<OrderTradeUpdate>),
+    TradeLite(Box<TradeLite>),
     Ping,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct TradeLite {
+    #[serde(rename = "E")]
+    pub event_time: u64,
+    #[serde(rename = "T")]
+    pub transaction_time: u64,
+    #[serde(rename = "s")]
+    pub symbol: String,
+    #[serde(rename = "q")]
+    pub quantity: Decimal,
+    #[serde(rename = "p")]
+    pub price: Decimal,
+    #[serde(rename = "m")]
+    pub is_maker: bool,
+    #[serde(rename = "c")]
+    pub client_order_id: String,
+    #[serde(rename = "S")]
+    pub side: OrderSide,
+    #[serde(rename = "L")]
+    pub last_filled_price: Decimal,
+    #[serde(rename = "l")]
+    pub order_last_filled_quantity: Decimal,
+    #[serde(rename = "t")]
+    pub trade_id: u64,
+    #[serde(rename = "i")]
+    pub order_id: u64,
 }
 
 #[derive(Debug, Deserialize)]

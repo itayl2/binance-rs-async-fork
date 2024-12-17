@@ -138,7 +138,7 @@ impl Symbol {
     pub fn get_min_order_size(&self) -> Decimal {
         for filter in self.filters.iter() {
             match filter {
-                Filters::LotSize { min_qty, .. } => return *min_qty.normalize(),
+                Filters::LotSize { min_qty, .. } => return (*min_qty).normalize(),
                 _ => {},
             }
         }

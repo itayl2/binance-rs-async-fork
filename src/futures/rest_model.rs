@@ -174,7 +174,7 @@ impl Symbol {
     pub fn get_order_price(&self, price: Decimal) -> Decimal {
         let quotient = price / self.tick_size;
         let floored_quotient = quotient.floor();
-        (floored_quotient * self.tick_size.normalize()
+        (floored_quotient * self.tick_size).normalize()
     }
 }
 

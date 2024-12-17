@@ -138,7 +138,7 @@ impl Symbol {
     pub fn get_min_order_size(&self) -> Decimal {
         for filter in self.filters.iter() {
             match filter {
-                Filters::LotSize { min_qty, .. } => return *min_qty,
+                Filters::LotSize { min_qty, .. } => return *min_qty.normalize(),
                 _ => {},
             }
         }
@@ -168,13 +168,13 @@ impl Symbol {
     pub fn round_order_size(&self, order_size: Decimal) -> Decimal {
         let quotient = order_size / self.step_size;
         let floored_quotient = quotient.floor();
-        floored_quotient * self.step_size
+        (floored_quotient * self.step_size).normalize()
     }
 
     pub fn get_order_price(&self, price: Decimal) -> Decimal {
         let quotient = price / self.tick_size;
         let floored_quotient = quotient.floor();
-        floored_quotient * self.tick_size
+        (floored_quotient * self.tick_size.normalize()
     }
 }
 

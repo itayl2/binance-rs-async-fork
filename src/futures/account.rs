@@ -79,7 +79,10 @@ impl From<OrderRequestMandatoryClientId> for OrderRequest {
             position_side: order.position_side,
             order_type: order.order_type,
             time_in_force: order.time_in_force,
-            quantity: order.quantity.normalize(),
+            quantity: match order.quantity {
+                Some(quantity) => Some(quantity.normalize()),
+                None => None,
+            },
             reduce_only: order.reduce_only,
             price: match order.price {
                 Some(price) => Some(price.normalize()),

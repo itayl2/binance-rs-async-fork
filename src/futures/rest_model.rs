@@ -773,6 +773,55 @@ pub struct Position {
     pub isolated_wallet: Decimal,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PositionV3 {
+    pub symbol: String,
+    pub position_side: PositionSide,
+    #[serde(rename = "positionAmt")]
+    pub position_amount: Decimal,
+    pub entry_price: Decimal,
+    pub break_even_price: Decimal,
+    pub mark_price: Decimal,
+    #[serde(rename = "unRealizedProfit")]
+    pub unrealized_profit: Decimal,
+    pub liquidation_price: Decimal,
+    pub isolated_margin: Decimal,
+    pub notional: Decimal,
+    pub margin_asset: String,
+    pub isolated_wallet: Decimal,
+    pub initial_margin: Decimal,
+    pub maint_margin: Decimal,
+    pub position_initial_margin: Decimal,
+    pub open_order_initial_margin: Decimal,
+    pub adl: u64,
+    pub bid_notional: Decimal,
+    pub ask_notional: Decimal,
+    pub update_time: u64,
+}
+
+impl PositionV3 {
+    pub fn get_size(&self) -> Decimal {
+        self.position_amount
+    }
+
+    pub fn get_unrealized_pnl(&self) -> Decimal {
+        self.unrealized_profit
+    }
+
+    pub fn get_side(&self) -> PositionSide {
+        self.position_side.clone()
+    }
+
+    pub fn is_short(&self) -> bool {
+        self.position_side == PositionSide::Short
+    }
+
+    pub fn get_market(&self) -> String {
+        self.symbol.clone()
+    }
+}
+
 // https://binance-docs.github.io/apidocs/futures/en/#account-information-v2-user_data
 // it has differences from Position returned by positionRisk endpoint
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -1045,6 +1094,51 @@ impl Default for AccountInformationV3 {
             max_withdraw_amount: Decimal::ZERO,
             assets: vec![],
             positions: vec![],
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountInformationV3WithPositionRisksV3 {
+    pub account_information: AccountInformationV3,
+    pub position_risks: Vec<PositionV3>,
+}
+
+impl AccountInformationV3WithPositionRisksV3 {
+    pub fn get_asset_balance(&self, asset: &str) -> Decimal {
+        self.account_information.assets.iter().find(|a| a.asset == asset).map(|a| a.wallet_balance).unwrap_or_default()
+    }
+
+    pub fn get_equity(&self) -> Decimal {
+        self.account_information.total_margin_balance
+    }
+
+    pub fn get_free_collateral(&self) -> Decimal {
+        self.account_information.available_balance
+    }
+
+    pub fn get_all_positions(&self) -> Vec<PositionV3> {
+        self.position_risks.clone()
+    }
+
+    pub fn get_position(&self, symbol: &str) -> Option<PositionV3> {
+        self.position_risks.iter().find(|p| p.symbol == symbol).cloned()
+    }
+
+    pub fn get_position_size(&self, symbol: &str) -> Option<Decimal> {
+        match self.get_position(symbol) {
+            Some(position) => Some(position.position_amount),
+            None => None,
+        }
+    }
+}
+
+impl Default for AccountInformationV3WithPositionRisksV3 {
+    fn default() -> Self {
+        Self {
+            account_information: AccountInformationV3::default(),
+            position_risks: vec![],
         }
     }
 }

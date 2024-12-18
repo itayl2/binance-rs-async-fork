@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
-
-use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, Symbol, Transaction, WorkingType};
+use futures::join;
+use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountInformationV3WithPositionRisksV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, PositionV3, Symbol, Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
@@ -350,6 +350,36 @@ impl FuturesAccount {
             .await
     }
 
+    /// Get current position risk for the symbol
+    pub async fn position_information_v3<S>(&self, symbol: S) -> Result<Vec<PositionV3>>
+    where
+        S: Into<String>,
+    {
+        self.client
+            .get_signed_p(
+                "/fapi/v3/positionRisk",
+                Some(PairAndWindowQuery {
+                    symbol: symbol.into(),
+                    recv_window: self.recv_window,
+                }),
+                self.recv_window,
+            )
+            .await
+    }
+
+    pub async fn all_position_information_v3<S>(&self) -> Result<Vec<PositionV3>>
+    where
+        S: Into<String>,
+    {
+        self.client
+            .get_signed_p(
+                "/fapi/v3/positionRisk",
+                None,
+                self.recv_window,
+            )
+            .await
+    }
+
     /// Return general [`AccountInformation`]
     pub async fn account_information(&self) -> Result<AccountInformation> {
         // needs to be changed to smth better later
@@ -362,6 +392,19 @@ impl FuturesAccount {
         // needs to be changed to smth better later
         let payload = build_signed_request(BTreeMap::<String, String>::new(), self.recv_window)?;
         self.client.get_signed_d("/fapi/v3/account", &payload).await
+    }
+
+    pub async fn account_information_v3_with_position_risk_v3(&self) -> Result<AccountInformationV3WithPositionRisksV3> {
+        let (account_information_result, position_risks_result) = join!(
+            self.account_information_v3(),
+            self.all_position_information_v3()
+        );
+
+        let (account_information, position_risks) = (account_information_result?, position_risks_result?);
+        Ok(AccountInformationV3WithPositionRisksV3 {
+            account_information,
+            position_risks,
+        })
     }
 
     /// Return account's [`AccountBalance`]

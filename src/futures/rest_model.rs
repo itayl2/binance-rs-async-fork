@@ -234,7 +234,7 @@ impl OrderType {
 
 /// By default, use market orders
 impl Default for OrderType {
-    fn default() -> Self { Self::Market }
+    fn default() -> Self { Self::Limit }
 }
 
 #[derive(Deserialize, Serialize, Display, EnumString, PartialEq, Eq, Debug, Clone)]
@@ -819,6 +819,14 @@ impl PositionV3 {
 
     pub fn get_market(&self) -> String {
         self.symbol.clone()
+    }
+
+    pub fn get_entry_price(&self) -> Decimal {
+        self.entry_price
+    }
+
+    pub fn get_value(&self) -> Decimal {
+        self.get_size() * self.get_entry_price()
     }
 }
 

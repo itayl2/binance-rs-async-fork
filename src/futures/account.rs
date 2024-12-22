@@ -392,19 +392,6 @@ impl FuturesAccount {
         self.client.get_signed_d("/fapi/v3/account", &payload).await
     }
 
-    pub async fn account_information_v3_with_position_risk_v3(&self) -> Result<AccountInformationV3WithPositionRisksV3> {
-        let (account_information_result, position_risks_result) = join!(
-            self.account_information_v3(),
-            self.all_position_information_v3()
-        );
-
-        let (account_information, position_risks) = (account_information_result?, position_risks_result?);
-        Ok(AccountInformationV3WithPositionRisksV3 {
-            account_information,
-            position_risks,
-        })
-    }
-
     /// Return account's [`AccountBalance`]
     pub async fn account_balance(&self) -> Result<Vec<AccountBalance>> {
         let parameters = BTreeMap::<String, String>::new();

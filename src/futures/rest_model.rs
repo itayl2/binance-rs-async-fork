@@ -447,6 +447,20 @@ pub struct AccountTrade {
     pub buyer: bool,
 }
 
+impl AccountTrade {
+    pub fn get_order_id(&self) -> u64 {
+        self.order_id
+    }
+
+    pub fn get_market(&self) -> String {
+        self.symbol.clone()
+    }
+
+    pub fn get_price_or_zero(&self) -> Decimal {
+        self.price
+    }
+}
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Order {
@@ -504,6 +518,10 @@ impl Order {
 
     pub fn get_price(&self) -> Decimal {
         self.price
+    }
+
+    pub fn get_optional_price(&self) -> Option<Decimal> {
+        Some(self.price)
     }
 
     pub fn get_client_id(&self) -> String {
@@ -620,6 +638,10 @@ impl Order {
 
     pub fn get_updated_timestamp_or_default(&self) -> i64 {
         self.update_time as i64
+    }
+
+    pub fn get_time_in_force(&self) -> Option<TimeInForce> {
+        Some(self.time_in_force.clone())
     }
 }
 
@@ -1102,51 +1124,6 @@ impl Default for AccountInformationV3 {
             max_withdraw_amount: Decimal::ZERO,
             assets: vec![],
             positions: vec![],
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct AccountInformationV3WithPositionRisksV3 {
-    pub account_information: AccountInformationV3,
-    pub position_risks: Vec<PositionV3>,
-}
-
-impl AccountInformationV3WithPositionRisksV3 {
-    pub fn get_asset_balance(&self, asset: &str) -> Decimal {
-        self.account_information.assets.iter().find(|a| a.asset == asset).map(|a| a.wallet_balance).unwrap_or_default()
-    }
-
-    pub fn get_equity(&self) -> Decimal {
-        self.account_information.total_margin_balance
-    }
-
-    pub fn get_free_collateral(&self) -> Decimal {
-        self.account_information.available_balance
-    }
-
-    pub fn get_all_positions(&self) -> Vec<PositionV3> {
-        self.position_risks.clone()
-    }
-
-    pub fn get_position(&self, symbol: &str) -> Option<PositionV3> {
-        self.position_risks.iter().find(|p| p.symbol == symbol).cloned()
-    }
-
-    pub fn get_position_size(&self, symbol: &str) -> Option<Decimal> {
-        match self.get_position(symbol) {
-            Some(position) => Some(position.position_amount),
-            None => None,
-        }
-    }
-}
-
-impl Default for AccountInformationV3WithPositionRisksV3 {
-    fn default() -> Self {
-        Self {
-            account_information: AccountInformationV3::default(),
-            position_risks: vec![],
         }
     }
 }

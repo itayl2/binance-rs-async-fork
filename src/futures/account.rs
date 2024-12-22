@@ -367,14 +367,12 @@ impl FuturesAccount {
             .await
     }
 
-    pub async fn all_position_information_v3<S>(&self) -> Result<Vec<PositionV3>>
-    where
-        S: Into<String>,
-    {
+    pub async fn all_position_information_v3(&self) -> Result<Vec<PositionV3>> {
+        let payload: Option<HashMap<String, String>> = None;
         self.client
             .get_signed_p(
                 "/fapi/v3/positionRisk",
-                None,
+                payload,
                 self.recv_window,
             )
             .await

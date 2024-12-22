@@ -643,6 +643,10 @@ impl Order {
     pub fn get_time_in_force(&self) -> Option<TimeInForce> {
         Some(self.time_in_force.clone())
     }
+
+    pub fn get_order_id_from_store_key(story_key: &str) -> Option<String> {
+        Some(story_key.to_string())
+    }
 }
 
 impl From<Box<OrderTradeUpdate>> for Order {

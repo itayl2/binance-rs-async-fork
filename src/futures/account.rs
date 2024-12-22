@@ -1,6 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
-use futures::join;
-use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountInformationV3WithPositionRisksV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, PositionV3, Symbol, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, PositionV3, Symbol, Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;

@@ -429,6 +429,7 @@ pub enum TimeInForce {
     FOK,
     /// Good till expired
     GTX,
+    None,
     #[serde(other)]
     Other,
 }

@@ -647,6 +647,10 @@ impl Order {
     pub fn get_order_id_from_store_key(story_key: &str) -> Option<String> {
         Some(story_key.to_string())
     }
+
+    pub fn get_type(&self) -> OrderType {
+        self.order_type.clone()
+    }
 }
 
 impl From<Box<OrderTradeUpdate>> for Order {

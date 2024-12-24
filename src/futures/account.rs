@@ -1,5 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
-use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, OrderType, Position, PositionSide, PositionV3, Symbol, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
@@ -47,14 +47,14 @@ pub struct GetOrderRequest {
     pub orig_client_order_id: Option<String>,
 }
 
-#[derive(Serialize, Default, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderRequest {
     pub symbol: String,
     pub side: OrderSide,
     pub position_side: Option<PositionSide>,
     #[serde(rename = "type")]
-    pub order_type: OrderType,
+    pub order_type: SupportedOrderType,
     pub time_in_force: Option<TimeInForce>,
     #[serde(rename = "quantity")]
     pub quantity: Option<Decimal>,
@@ -101,14 +101,14 @@ impl From<OrderRequestMandatoryClientId> for OrderRequest {
     }
 }
 
-#[derive(Serialize, Default, Clone, Debug, Deserialize)]
+#[derive(Serialize, Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderRequestMandatoryClientId {
     pub symbol: String,
     pub side: OrderSide,
     pub position_side: Option<PositionSide>,
     #[serde(rename = "type")]
-    pub order_type: OrderType,
+    pub order_type: SupportedOrderType,
     pub time_in_force: Option<TimeInForce>,
     #[serde(rename = "quantity")]
     pub quantity: Option<Decimal>,
@@ -231,7 +231,7 @@ impl FuturesAccount {
             symbol: symbol.into(),
             side: OrderSide::Buy,
             position_side: None,
-            order_type: OrderType::Limit,
+            order_type: SupportedOrderType::Limit,
             time_in_force: Some(time_in_force),
             quantity: Some(qty.into()),
             reduce_only: None,
@@ -259,7 +259,7 @@ impl FuturesAccount {
             symbol: symbol.into(),
             side: OrderSide::Sell,
             position_side: None,
-            order_type: OrderType::Limit,
+            order_type: SupportedOrderType::Limit,
             time_in_force: Some(time_in_force),
             quantity: Some(qty.into()),
             reduce_only: None,
@@ -285,7 +285,7 @@ impl FuturesAccount {
             symbol: symbol.into(),
             side: OrderSide::Buy,
             position_side: None,
-            order_type: OrderType::Market,
+            order_type: SupportedOrderType::Market,
             time_in_force: None,
             quantity: Some(qty.into()),
             reduce_only: None,
@@ -311,7 +311,7 @@ impl FuturesAccount {
             symbol: symbol.into(),
             side: OrderSide::Sell,
             position_side: None,
-            order_type: OrderType::Market,
+            order_type: SupportedOrderType::Market,
             time_in_force: None,
             quantity: Some(qty.into()),
             reduce_only: None,

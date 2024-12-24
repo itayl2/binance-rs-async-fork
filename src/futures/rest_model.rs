@@ -205,6 +205,17 @@ pub enum OrderType {
     TrailingStopMarket,
 }
 
+#[derive(Deserialize, Serialize, Display, EnumString, PartialEq, Eq, Debug, Clone, Hash)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SupportedOrderType { // order types that our bot supports
+    Limit,
+    Market,
+    Stop,
+    StopMarket,
+    TakeProfit,
+    TakeProfitMarket,
+}
+
 impl OrderType {
     pub fn requires_trigger_price(&self) -> bool {
         match self {

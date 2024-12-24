@@ -114,6 +114,7 @@ pub struct OrderRequestMandatoryClientId {
     pub quantity: Option<Decimal>,
     pub reduce_only: Option<bool>,
     pub price: Option<Decimal>,
+    #[serde(skip_serializing, default)]
     pub intended_price: Decimal,
     pub stop_price: Option<Decimal>,
     pub close_position: Option<bool>,

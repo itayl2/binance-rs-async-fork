@@ -216,29 +216,78 @@ pub enum SupportedOrderType { // order types that our bot supports
     TakeProfitMarket,
 }
 
-impl OrderType {
+impl SupportedOrderType {
+    pub fn to_order_type(&self) -> OrderType {
+        match self {
+            SupportedOrderType::Limit => OrderType::Limit,
+            SupportedOrderType::Market => OrderType::Market,
+            SupportedOrderType::Stop => OrderType::Stop,
+            SupportedOrderType::StopMarket => OrderType::StopMarket,
+            SupportedOrderType::TakeProfit => OrderType::TakeProfit,
+            SupportedOrderType::TakeProfitMarket => OrderType::TakeProfitMarket,
+        }
+    }
+    
+    pub fn from_order_type(order_type: &OrderType) -> Option<Self> {
+        match order_type {
+            OrderType::Limit => Some(SupportedOrderType::Limit),
+            OrderType::Market => Some(SupportedOrderType::Market),
+            OrderType::Stop => Some(SupportedOrderType::Stop),
+            OrderType::StopMarket => Some(SupportedOrderType::StopMarket),
+            OrderType::TakeProfit => Some(SupportedOrderType::TakeProfit),
+            OrderType::TakeProfitMarket => Some(SupportedOrderType::TakeProfitMarket),
+            _ => None,
+        }
+    }
+
     pub fn requires_trigger_price(&self) -> bool {
         match self {
-            OrderType::Stop => true,
-            OrderType::StopMarket => true,
-            OrderType::TakeProfit => true,
-            OrderType::TakeProfitMarket => true,
-            OrderType::TrailingStopMarket => true,
+            Self::Stop => true,
+            Self::StopMarket => true,
+            Self::TakeProfit => true,
+            Self::TakeProfitMarket => true,
             _ => false,
         }
     }
 
-    pub fn get_stop_values() -> Vec<OrderType> {
+    pub fn get_stop_values() -> Vec<Self> {
         vec![
-            OrderType::Stop,
-            OrderType::StopMarket,
+            Self::Stop,
+            Self::StopMarket,
         ]
     }
 
-    pub fn get_take_profit_values() -> Vec<OrderType> {
+    pub fn get_take_profit_values() -> Vec<Self> {
         vec![
-            OrderType::TakeProfit,
-            OrderType::TakeProfitMarket,
+            Self::TakeProfit,
+            Self::TakeProfitMarket,
+        ]
+    }
+}
+
+impl OrderType {
+    pub fn requires_trigger_price(&self) -> bool {
+        match self {
+            Self::Stop => true,
+            Self::StopMarket => true,
+            Self::TakeProfit => true,
+            Self::TakeProfitMarket => true,
+            Self::TrailingStopMarket => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_stop_values() -> Vec<Self> {
+        vec![
+            Self::Stop,
+            Self::StopMarket,
+        ]
+    }
+
+    pub fn get_take_profit_values() -> Vec<Self> {
+        vec![
+            Self::TakeProfit,
+            Self::TakeProfitMarket,
         ]
     }
 }
@@ -856,6 +905,10 @@ impl PositionV3 {
 
     pub fn is_short(&self) -> bool {
         self.position_side == PositionSide::Short
+    }
+    
+    pub fn is_long(&self) -> bool {
+        self.position_side == PositionSide::Long
     }
 
     pub fn get_market(&self) -> String {

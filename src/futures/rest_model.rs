@@ -979,7 +979,8 @@ pub struct AccountPositionV3 {
     #[serde(rename = "maintMargin")]
     pub maintenance_margin: Decimal,
     pub unrealized_profit: Decimal,
-    pub position_initial_margin: Decimal,
+    #[serde(default)]
+    pub position_initial_margin: Option<Decimal>,
     pub isolated_margin: Decimal,
     pub notional: Decimal,
     pub isolated_wallet: Decimal,

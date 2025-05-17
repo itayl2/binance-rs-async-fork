@@ -434,6 +434,12 @@ pub enum TimeInForce {
     Other,
 }
 
+impl Default for TimeInForce {
+    fn default() -> Self {
+        Self::GTX
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderResponse {

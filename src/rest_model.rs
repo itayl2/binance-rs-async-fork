@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::HashMap;
 use rust_decimal::Decimal;
+use crate::errors::Result;
 use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -1195,6 +1196,9 @@ impl OrderStatus {
     pub fn get_closed_statuses() -> Vec<Self> {
         vec![Self::Filled, Self::Canceled, Self::Rejected, Self::Expired, Self::ExpiredInMatch]
     }
+    pub fn get_canceled_statuses() -> Vec<Self> {
+        vec![Self::Canceled, Self::Expired, Self::ExpiredInMatch]
+    }
 
     pub fn get_step_number(&self) -> f64 {
         match self {
@@ -1364,6 +1368,36 @@ pub struct KlineSummary {
     pub number_of_trades: i64,
     pub taker_buy_base_asset_volume: Decimal,
     pub taker_buy_quote_asset_volume: Decimal,
+}
+
+impl KlineSummary {
+    pub fn get_open(&self) -> Decimal {
+        self.open
+    }
+
+    pub fn get_high(&self) -> Decimal {
+        self.high
+    }
+
+    pub fn get_low(&self) -> Decimal {
+        self.low
+    }
+
+    pub fn get_close(&self) -> Decimal {
+        self.close
+    }
+
+    pub fn get_quote_volume(&self) -> Decimal {
+        self.quote_asset_volume
+    }
+
+    pub fn get_base_volume(&self) -> Decimal {
+        self.volume
+    }
+
+    pub fn get_timestamp(&self) -> Result<u64> {
+        Ok(self.open_time as u64)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

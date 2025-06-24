@@ -143,8 +143,8 @@ impl OrderRequestMandatoryClientId {
         self.quantity.unwrap_or(Decimal::ZERO)
     }
 
-    pub fn get_price(&self) -> Decimal {
-        self.price.unwrap_or(Decimal::ZERO)
+    pub fn get_price(&self) -> Option<Decimal> {
+        self.price
     }
 
     pub fn get_market(&self) -> String {
@@ -210,7 +210,7 @@ impl FuturesAccount {
     }
 
     /// Get account trades
-    pub async fn get_account_trades(&self, symbol: impl Into<String>, order_id: Option<u64>) -> Result<Vec<AccountTrade>> {
+    pub async fn get_account_trades(&self, symbol: impl Into<String>, order_id: Option<String>) -> Result<Vec<AccountTrade>> {
         let mut data: HashMap<String, String> = HashMap::from([("symbol".to_string(), symbol.into())]);
         if let Some(order_id) = order_id {
             data.insert("orderId".to_string(), order_id.to_string());

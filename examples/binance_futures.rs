@@ -76,7 +76,7 @@ async fn market_data() {
         Err(e) => error!("Error: {:?}", e),
     }
 
-    match market.get_klines("btcusdt", "5m", 10u16, None, None).await {
+    match market.get_klines(GetKlinesParams { symbol: "btcusdt".into(), interval: "5m".into(), limit: 10u16, ..Default::default() }).await {
         Ok(KlineSummaries::AllKlineSummaries(answer)) => info!("First kline: {:?}", answer[0]),
         Err(e) => error!("Error: {:?}", e),
     }

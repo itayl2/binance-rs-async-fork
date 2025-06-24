@@ -285,27 +285,16 @@ impl FuturesMarket {
 
     /// Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
     /// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data
-    pub async fn get_klines<S1, S2, S3, S4, S5>(
+    pub async fn get_klines(
         &self,
-        symbol: S1,
-        interval: S2,
-        limit: S3,
-        start_time: S4,
-        end_time: S5,
-    ) -> Result<KlineSummaries>
-    where
-        S1: Into<String>,
-        S2: Into<String>,
-        S3: Into<u16>,
-        S4: Into<Option<u64>>,
-        S5: Into<Option<u64>>,
-    {
+        params: GetKlinesParams,
+    ) -> Result<KlineSummaries> {
         let query = HistoryQuery {
-            start_time: start_time.into(),
-            end_time: end_time.into(),
-            limit: limit.into(),
-            symbol: symbol.into(),
-            interval: Some(interval.into()),
+            start_time: params.start_time.into(),
+            end_time: params.end_time.into(),
+            limit: params.limit.into(),
+            symbol: params.symbol.into(),
+            interval: Some(params.interval.into()),
             from_id: None,
             period: None,
         };

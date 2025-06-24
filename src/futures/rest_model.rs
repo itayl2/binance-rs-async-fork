@@ -11,6 +11,15 @@ use rust_decimal::prelude::ToPrimitive;
 use crate::futures::ws_model::{OrderTradeUpdate, WebsocketOrder};
 use crate::errors::Result as WrappedResult;
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetKlinesParams {
+    pub symbol: String,
+    pub interval: String,
+    pub limit: u16,
+    pub start_time: Option<u64>,
+    pub end_time: Option<u64>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ExchangeInformation {
@@ -216,6 +225,12 @@ pub enum SupportedOrderType { // order types that our bot supports
     TakeProfitMarket,
 }
 
+impl Default for SupportedOrderType {
+    fn default() -> Self {
+        Self::Limit
+    }
+}
+
 impl SupportedOrderType {
     pub fn to_order_type(&self) -> OrderType {
         match self {
@@ -300,19 +315,41 @@ impl Default for OrderType {
 #[derive(Deserialize, Serialize, Display, EnumString, PartialEq, Eq, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PositionSide {
-    Both,
+    // Both,
     Long,
     Short,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+impl PositionSide {
+    pub fn is_long(&self) -> bool {
+        self == &Self::Long
+    }
+
+    pub fn is_short(&self) -> bool {
+        self == &Self::Short
+    }
+}
+
+impl Default for PositionSide {
+    fn default() -> Self {
+        Self::Long
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum WorkingType {
     MarkPrice,
     ContractPrice,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+impl Default for WorkingType {
+    fn default() -> Self {
+        Self::MarkPrice
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum MarginType {
     Isolated,
@@ -493,7 +530,7 @@ pub struct OpenInterest {
 pub struct AccountTrade {
     pub symbol: String,
     pub id: u64,
-    pub order_id: u64,
+    pub order_id: String,
     pub side: OrderSide,
     pub price: Decimal,
     pub qty: Decimal,
@@ -508,10 +545,6 @@ pub struct AccountTrade {
 }
 
 impl AccountTrade {
-    pub fn get_order_id(&self) -> u64 {
-        self.order_id
-    }
-
     pub fn get_market(&self) -> String {
         self.symbol.clone()
     }
@@ -519,15 +552,23 @@ impl AccountTrade {
     pub fn get_price_or_zero(&self) -> Decimal {
         self.price
     }
+    
+    pub fn get_size(&self) -> Decimal {
+        self.qty
+    }
+    
+    pub fn get_order_id(&self) -> String {
+        self.order_id.to_string()
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
+#[derive(Debug, Deserialize, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Order {
     pub client_order_id: String,
     pub cum_quote: Decimal,
     pub executed_qty: Decimal,
-    pub order_id: u64,
+    pub order_id: String,
     pub avg_price: Decimal,
     pub orig_qty: Decimal,
     pub price: Decimal,
@@ -541,14 +582,14 @@ pub struct Order {
     pub symbol: String,
     pub time_in_force: TimeInForce,
     #[serde(rename = "type")]
-    pub order_type: OrderType,
-    pub orig_type: OrderType,
+    pub order_type: SupportedOrderType,
+    pub orig_type: SupportedOrderType,
     #[serde(default = "default_activation_price")]
-    pub activate_price: Decimal,
+    pub activate_price: Decimal, // only relevant for TrailingStopMarket orders
     #[serde(default = "default_price_rate")]
-    pub price_rate: Decimal,
+    pub price_rate: Decimal, // only relevant for TrailingStopMarket orders
     pub update_time: u64,
-    pub working_type: WorkingType,
+    pub working_type: WorkingType,  // stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
     pub price_protect: bool,
     #[serde(default)]
     pub good_till_date: Option<i64>,
@@ -592,8 +633,8 @@ impl Order {
         self.order_id.to_string()
     }
 
-    pub fn get_raw_order_id(&self) -> u64 {
-        self.order_id
+    pub fn get_raw_order_id(&self) -> String {
+        self.order_id.clone()
     }
 
     pub fn get_market(&self) -> String {
@@ -700,16 +741,20 @@ impl Order {
         self.update_time as i64
     }
 
-    pub fn get_time_in_force(&self) -> Option<TimeInForce> {
-        Some(self.time_in_force.clone())
+    pub fn get_time_in_force(&self) -> TimeInForce {
+        self.time_in_force.clone()
     }
 
     pub fn get_order_id_from_store_key(story_key: &str) -> Option<String> {
         Some(story_key.to_string())
     }
 
-    pub fn get_type(&self) -> OrderType {
+    pub fn get_type(&self) -> SupportedOrderType {
         self.order_type.clone()
+    }
+    
+    pub fn set_filled_price(&mut self, filled_price: Decimal) {
+        self.avg_price = filled_price;
     }
 }
 
@@ -754,20 +799,20 @@ impl Default for Order {
             client_order_id: String::new(),
             cum_quote: Decimal::ZERO,
             executed_qty: Decimal::ZERO,
-            order_id: 0,
+            order_id: "".to_string(),
             avg_price: Decimal::ZERO,
             orig_qty: Decimal::ZERO,
             price: Default::default(),
             side: OrderSide::default(),
             reduce_only: false,
-            position_side: PositionSide::Both,
+            position_side: PositionSide::Long,
             status: OrderStatus::New,
             stop_price: Default::default(),
             close_position: false,
             symbol: "".to_string(),
             time_in_force: TimeInForce::GTC,
             order_type: Default::default(),
-            orig_type: OrderType::Limit,
+            orig_type: SupportedOrderType::Limit,
             activate_price: Decimal::ZERO,
             price_rate: Decimal::ZERO,
             update_time: 0,

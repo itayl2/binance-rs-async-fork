@@ -437,7 +437,7 @@ pub enum TimeInForce {
 
 impl Default for TimeInForce {
     fn default() -> Self {
-        Self::GTX
+        Self::GTC
     }
 }
 

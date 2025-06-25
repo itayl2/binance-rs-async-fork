@@ -1,3 +1,4 @@
+use serde_aux::prelude::*;
 use rust_decimal::Decimal;
 use crate::futures::rest_model::{MarginType, PositionSide, SupportedOrderType, WorkingType};
 use crate::rest_model::{ExecutionType, OrderSide, OrderStatus, TimeInForce};
@@ -35,7 +36,7 @@ pub struct TradeLite {
     pub order_last_filled_quantity: Decimal,
     #[serde(rename = "t")]
     pub trade_id: u64,
-    #[serde(rename = "i")]
+    #[serde(rename = "i", deserialize_with = "deserialize_string_from_number")]
     pub order_id: String,
 }
 
@@ -149,7 +150,7 @@ pub struct WebsocketOrder {
     pub execution_type: ExecutionType,
     #[serde(rename = "X")]
     pub order_status: OrderStatus,
-    #[serde(rename = "i")]
+    #[serde(rename = "i", deserialize_with = "deserialize_string_from_number")]
     pub order_id: String,
     #[serde(rename = "l")]
     pub order_last_filled_quantity: Decimal,

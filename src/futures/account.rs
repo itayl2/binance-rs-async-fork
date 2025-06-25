@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
-use crate::account::OrderCancellation;
+use crate::account::{OrderCancellation, OrderCancellationWithU64};
 use crate::client::Client;
 use crate::errors::*;
 use crate::rest_model::{OrderSide, TimeInForce};
@@ -330,7 +330,21 @@ impl FuturesAccount {
     /// Place a cancellation order
     pub async fn cancel_order(&self, o: OrderCancellation) -> Result<CanceledOrder> {
         let recv_window = o.recv_window.unwrap_or(self.recv_window);
-        self.client.delete_signed_p("/fapi/v1/order", &o, recv_window).await
+        if let Some(order_id) = o.order_id {
+            let as_u64 = OrderCancellationWithU64 {
+                symbol: o.symbol,
+                order_id: Some(match order_id.parse::<u64>() {
+                    Ok(id) => id,
+                    Err(_) => 0,
+                }),
+                orig_client_order_id: o.orig_client_order_id,
+                new_client_order_id: o.new_client_order_id,
+                recv_window: o.recv_window,
+            };
+            self.client.delete_signed_p("/fapi/v1/order", &as_u64, recv_window).await
+        } else {
+            self.client.delete_signed_p("/fapi/v1/order", &o, recv_window).await
+        }
     }
 
     /// Get current position risk for the symbol

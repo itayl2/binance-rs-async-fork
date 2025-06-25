@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use strum_macros::{Display, EnumString};
 use rust_decimal::Decimal;
+use serde_aux::prelude::*;
 use crate::rest_model::string_or_bool;
 pub use crate::rest_model::{string_or_u64, Asks, Bids, BookTickers, KlineSummaries, KlineSummary,
                             OrderSide, OrderStatus, RateLimit, ServerTime, SymbolPrice, SymbolStatus, Tickers,
@@ -530,6 +531,7 @@ pub struct OpenInterest {
 pub struct AccountTrade {
     pub symbol: String,
     pub id: u64,
+    #[serde(deserialize_with = "deserialize_string_from_number")]
     pub order_id: String,
     pub side: OrderSide,
     pub price: Decimal,
@@ -552,13 +554,13 @@ impl AccountTrade {
     pub fn get_price_or_zero(&self) -> Decimal {
         self.price
     }
-    
+
     pub fn get_size(&self) -> Decimal {
         self.qty
     }
-    
+
     pub fn get_order_id(&self) -> String {
-        self.order_id.to_string()
+        self.order_id.clone()
     }
 }
 
@@ -568,6 +570,7 @@ pub struct Order {
     pub client_order_id: String,
     pub cum_quote: Decimal,
     pub executed_qty: Decimal,
+    #[serde(deserialize_with = "deserialize_string_from_number")]
     pub order_id: String,
     pub avg_price: Decimal,
     pub orig_qty: Decimal,
@@ -630,7 +633,7 @@ impl Order {
     }
 
     pub fn get_order_id(&self) -> String {
-        self.order_id.to_string()
+        self.order_id.clone()
     }
 
     pub fn get_raw_order_id(&self) -> String {
@@ -752,7 +755,7 @@ impl Order {
     pub fn get_type(&self) -> SupportedOrderType {
         self.order_type.clone()
     }
-    
+
     pub fn set_filled_price(&mut self, filled_price: Decimal) {
         self.avg_price = filled_price;
     }
@@ -831,7 +834,8 @@ pub struct Transaction {
     pub cum_qty: Decimal,
     pub cum_quote: Decimal,
     pub executed_qty: Decimal,
-    pub order_id: u64,
+    #[serde(deserialize_with = "deserialize_string_from_number")]
+    pub order_id: String,
     pub avg_price: Decimal,
     pub orig_qty: Decimal,
     pub reduce_only: bool,
@@ -861,7 +865,8 @@ pub struct CanceledOrder {
     pub cum_qty: Decimal,
     pub cum_quote: Decimal,
     pub executed_qty: Decimal,
-    pub order_id: u64,
+    #[serde(deserialize_with = "deserialize_string_from_number")]
+    pub order_id: String,
     pub orig_qty: Decimal,
     pub orig_type: String,
     pub price: Decimal,

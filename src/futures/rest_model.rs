@@ -313,7 +313,7 @@ impl Default for OrderType {
     fn default() -> Self { Self::Limit }
 }
 
-#[derive(Deserialize, Serialize, Display, EnumString, PartialEq, Eq, Debug, Clone)]
+#[derive(Deserialize, Serialize, Display, EnumString, Hash, PartialEq, Eq, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PositionSide {
     // Both,

@@ -1,5 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
-use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, CanceledOrdersResponse, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrdersResponse, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
 use crate::account::{OrderCancellation, OrderCancellationWithU64};
 use crate::client::Client;
 use crate::errors::*;

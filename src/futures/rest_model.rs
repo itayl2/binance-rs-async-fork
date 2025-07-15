@@ -16,7 +16,7 @@ use crate::errors::Result as WrappedResult;
 #[cfg(not(feature = "backtest"))]
 pub type CanceledOrderResponse = CanceledOrder;
 #[cfg(feature = "backtest")]
-pub type CanceledOrdersResponse = Order;
+pub type CanceledOrderResponse = Order;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetKlinesParams {

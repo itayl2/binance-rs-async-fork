@@ -1,5 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
-use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrdersResponse, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrderResponse, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
 use crate::account::{OrderCancellation, OrderCancellationWithU64};
 use crate::client::Client;
 use crate::errors::*;
@@ -341,7 +341,7 @@ impl FuturesAccount {
     }
 
     /// Place a cancellation order
-    pub async fn cancel_order(&self, o: OrderCancellation) -> Result<CanceledOrdersResponse> {
+    pub async fn cancel_order(&self, o: OrderCancellation) -> Result<CanceledOrderResponse> {
         let recv_window = o.recv_window.unwrap_or(self.recv_window);
         if let Some(order_id) = o.order_id {
             let as_u64 = OrderCancellationWithU64 {

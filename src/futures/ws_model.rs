@@ -10,6 +10,8 @@ pub enum WebsocketEvent {
     OrderTradeUpdate(Box<OrderTradeUpdate>),
     TradeLite(Box<TradeLite>),
     Ping,
+    #[cfg(feature = "backtest")]
+    Backtest(Box<serde_json::Value>),
 }
 
 #[derive(Debug, Deserialize, Clone)]

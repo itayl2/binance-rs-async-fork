@@ -12,6 +12,12 @@ use rust_decimal::prelude::ToPrimitive;
 use crate::futures::ws_model::{OrderTradeUpdate, WebsocketOrder};
 use crate::errors::Result as WrappedResult;
 
+
+#[cfg(not(feature = "backtest"))]
+pub type CanceledOrderResponse = CanceledOrder;
+#[cfg(feature = "backtest")]
+pub type CanceledOrdersResponse = Order;
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetKlinesParams {
     pub symbol: String,

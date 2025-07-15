@@ -1,5 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
-use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrder, CanceledOrdersResponse, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
 use crate::account::{OrderCancellation, OrderCancellationWithU64};
 use crate::client::Client;
 use crate::errors::*;
@@ -180,7 +180,16 @@ impl FuturesAccount {
     }
 
     /// Place an order
+    #[cfg(not(feature = "backtest"))]
     pub async fn place_order(&self, order: OrderRequest) -> Result<Transaction> {
+        self.client
+            .post_signed_p("/fapi/v1/order", order, self.recv_window)
+            .await
+    }
+
+    /// Place an order
+    #[cfg(feature = "backtest")]
+    pub async fn place_order(&self, order: serde_json::Value) -> Result<Order> {
         self.client
             .post_signed_p("/fapi/v1/order", order, self.recv_window)
             .await
@@ -220,6 +229,7 @@ impl FuturesAccount {
     }
 
     /// Place a limit buy order
+    #[cfg(not(feature = "backtest"))]
     pub async fn limit_buy(
         &self,
         symbol: impl Into<String>,
@@ -248,6 +258,7 @@ impl FuturesAccount {
     }
 
     /// Place a limit sell order
+    #[cfg(not(feature = "backtest"))]
     pub async fn limit_sell(
         &self,
         symbol: impl Into<String>,
@@ -276,6 +287,7 @@ impl FuturesAccount {
     }
 
     /// Place a Market buy order
+    #[cfg(not(feature = "backtest"))]
     pub async fn market_buy<S, F>(&self, symbol: S, qty: F) -> Result<Transaction>
     where
         S: Into<String>,
@@ -302,6 +314,7 @@ impl FuturesAccount {
     }
 
     /// Place a Market sell order
+    #[cfg(not(feature = "backtest"))]
     pub async fn market_sell<S, F>(&self, symbol: S, qty: F) -> Result<Transaction>
     where
         S: Into<String>,
@@ -328,7 +341,7 @@ impl FuturesAccount {
     }
 
     /// Place a cancellation order
-    pub async fn cancel_order(&self, o: OrderCancellation) -> Result<CanceledOrder> {
+    pub async fn cancel_order(&self, o: OrderCancellation) -> Result<CanceledOrdersResponse> {
         let recv_window = o.recv_window.unwrap_or(self.recv_window);
         if let Some(order_id) = o.order_id {
             let as_u64 = OrderCancellationWithU64 {

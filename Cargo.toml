@@ -23,6 +23,7 @@ futures_api = []
 margin_api = []
 savings_api = []
 wallet_api = []
+backtest = []
 all_apis = ["futures_api", "margin_api", "savings_api", "wallet_api"]
 
 [dependencies]

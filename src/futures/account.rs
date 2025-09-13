@@ -187,6 +187,14 @@ impl FuturesAccount {
             .await
     }
 
+    #[cfg(not(feature = "backtest"))]
+    pub async fn place_order_with_key(&self, order: OrderRequest, private_key: &str) -> Result<Transaction> {
+        self.client
+            .post_signed_p_with_key("/fapi/v1/order", order, self.recv_window, private_key)
+            .await
+    }
+
+
     /// Place an order
     #[cfg(feature = "backtest")]
     pub async fn place_order(&self, order: serde_json::Value) -> Result<Order> {

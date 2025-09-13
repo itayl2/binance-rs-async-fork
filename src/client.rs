@@ -39,7 +39,7 @@ impl Client {
     }
 
     pub async fn get_signed<T: DeserializeOwned>(&self, endpoint: &str, request: &str) -> Result<T> {
-        let url = self.sign_request(endpoint, request);
+        let url = self.sign_request(endpoint, request, None);
         let response = self.inner.get(&url).headers(self.build_headers(true)?).send().await?;
 
         self.handler(response).await
@@ -60,7 +60,14 @@ impl Client {
     }
 
     pub async fn post_signed<T: DeserializeOwned>(&self, endpoint: &str, request: &str) -> Result<T> {
-        let url = self.sign_request(endpoint, request);
+        let url = self.sign_request(endpoint, request, None);
+        let response = self.inner.post(&url).headers(self.build_headers(true)?).send().await?;
+
+        self.handler(response).await
+    }
+
+    pub async fn post_signed_with_key<T: DeserializeOwned>(&self, endpoint: &str, request: &str, private_key: &str) -> Result<T> {
+        let url = self.sign_request(endpoint, request, Some(private_key.to_string()));
         let response = self.inner.post(&url).headers(self.build_headers(true)?).send().await?;
 
         self.handler(response).await
@@ -80,6 +87,17 @@ impl Client {
         self.post_signed(endpoint, &request).await
     }
 
+    pub async fn post_signed_p_with_key<T: de::DeserializeOwned, P: serde::Serialize>(
+        &self,
+        endpoint: &str,
+        payload: P,
+        recv_window: u64,
+        private_key: &str,
+    ) -> Result<T> {
+        let request = build_signed_request_p(payload, recv_window)?;
+        self.post_signed_with_key(endpoint, &request, private_key).await
+    }
+
     pub async fn delete_signed_p<T: de::DeserializeOwned, P: serde::Serialize>(
         &self,
         endpoint: &str,
@@ -91,7 +109,7 @@ impl Client {
     }
 
     pub async fn delete_signed<T: DeserializeOwned>(&self, endpoint: &str, request: &str) -> Result<T> {
-        let url = self.sign_request(endpoint, request);
+        let url = self.sign_request(endpoint, request, None);
         let response = self
             .inner
             .delete(&url)
@@ -172,8 +190,12 @@ impl Client {
     }
 
     // Request must be signed
-    fn sign_request(&self, endpoint: &str, request: &str) -> String {
-        let signed_key = hmac::Key::new(hmac::HMAC_SHA256, self.secret_key.as_bytes());
+    fn sign_request(&self, endpoint: &str, request: &str, secret_key: Option<String>) -> String {
+        let secret = match secret_key {
+            Some(secret_key) => secret_key,
+            None => self.secret_key.clone(),
+        };
+        let signed_key = hmac::Key::new(hmac::HMAC_SHA256, secret.as_bytes());
         let signature = hex_encode(hmac::sign(&signed_key, request.as_bytes()).as_ref());
         let url = format!("{}{}?{}&signature={}", self.host, endpoint, request, signature);
 

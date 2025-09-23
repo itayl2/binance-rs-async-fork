@@ -947,6 +947,10 @@ pub struct PositionV3 {
 }
 
 impl PositionV3 {
+    pub fn get_name(&self) -> String {
+        format!("{}:{}", self.get_market(), self.get_side())
+    }
+
     pub fn get_size(&self) -> Decimal {
         self.position_amount
     }

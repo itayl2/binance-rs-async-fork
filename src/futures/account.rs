@@ -37,7 +37,7 @@ where
     }
 }
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GetOrderRequest {
     pub symbol: String,

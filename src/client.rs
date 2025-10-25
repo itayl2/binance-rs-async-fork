@@ -235,7 +235,7 @@ impl Client {
                     Err(error) => return Err(Error::Msg(format!("Failed to read OK response text: {error:?}")))
                 };
                 serde_json::from_str::<T>(&text).map_err(|error| {
-                    Error::Msg(format!("Failed to parse successful (200 OK) response: {error:?}. Raw response: {text}"))
+                    Error::Msg(format!("Failed to JSON parse OK response: {error:?}. Raw response: {text}"))
                 })
             },
             StatusCode::INTERNAL_SERVER_ERROR => Err(Error::InternalServerError),

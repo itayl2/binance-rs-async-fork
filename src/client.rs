@@ -229,15 +229,34 @@ impl Client {
 
     async fn handler<T: de::DeserializeOwned>(&self, response: Response) -> Result<T> {
         match response.status() {
-            StatusCode::OK => Ok(response.json().await?),
+            StatusCode::OK => {
+                let text = match response.text().await {
+                    Ok(text) => text,
+                    Err(error) => return Err(Error::Msg(format!("Failed to read OK response text: {error:?}")))
+                };
+                serde_json::from_str::<T>(&text).map_err(|error| {
+                    Error::Msg(format!("Failed to parse successful (200 OK) response: {error:?}. Raw response: {text}"))
+                })
+            },
             StatusCode::INTERNAL_SERVER_ERROR => Err(Error::InternalServerError),
             StatusCode::SERVICE_UNAVAILABLE => Err(Error::ServiceUnavailable),
             StatusCode::UNAUTHORIZED => Err(Error::Unauthorized),
             StatusCode::BAD_REQUEST => {
-                let error: BinanceContentError = response.json().await?;
+                let text = match response.text().await {
+                    Ok(text) => text,
+                    Err(error) => return Err(Error::Msg(format!("Failed to read BAD REQUEST response text: {error:?}")))
+                };
+                let error: BinanceContentError = match serde_json::from_str::<BinanceContentError>(&text) {
+                    Ok(error) => error,
+                    Err(parsing_error) => return Err(Error::Msg(format!("Failed to parse BAD REQUEST response: {parsing_error:?}. Raw response: {text}")))
+                };
                 Err(handle_content_error(error))
-            }
-            s => Err(Error::Msg(format!("Received response: {s:?}"))),
+            },
+            s => {
+                let debugged_response = format!("{response:?}");
+                let text = response.text().await.unwrap_or_else(|error| format!("Failed to read response text: {error:?}"));
+                Err(Error::Msg(format!("Received unexpected response status: {s:?}. Response obj: {debugged_response:?}. Text: {text}")))
+            },
         }
     }
 }

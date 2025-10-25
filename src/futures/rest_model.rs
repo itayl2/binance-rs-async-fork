@@ -6,8 +6,8 @@ use crate::rest_model::string_or_bool;
 pub use crate::rest_model::{string_or_u64, Asks, Bids, BookTickers, KlineSummaries, KlineSummary,
                             OrderSide, OrderStatus, RateLimit, ServerTime, SymbolPrice, SymbolStatus, Tickers,
                             TimeInForce};
-use serde::{Deserialize, Deserializer, Serialize};
-use chrono::{DateTime, Utc, TimeZone, MappedLocalTime};
+use serde::{Deserialize, Serialize};
+use chrono::{DateTime, MappedLocalTime, TimeZone, Utc};
 use rust_decimal::prelude::ToPrimitive;
 use crate::futures::ws_model::{OrderTradeUpdate, WebsocketOrder};
 use crate::errors::Result as WrappedResult;
@@ -76,78 +76,6 @@ pub struct Symbol {
     pub tick_size: Decimal,
     pub step_scale: u32,
     pub tick_scale: u32,
-}
-
-impl<'de> Deserialize<'de> for Symbol {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        // Define a temporary struct that matches the JSON structure
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct TempObject {
-            pub symbol: String,
-            pub pair: String,
-            pub contract_type: ContractType,
-            pub delivery_date: u64,
-            pub onboard_date: u64,
-            pub status: SymbolStatus,
-            pub maint_margin_percent: Decimal,
-            pub required_margin_percent: Decimal,
-            pub base_asset: String,
-            pub quote_asset: String,
-            pub price_precision: u16,
-            pub quantity_precision: u16,
-            pub base_asset_precision: u64,
-            pub quote_precision: u64,
-            pub underlying_type: String,
-            pub underlying_sub_type: Vec<String>,
-            pub settle_plan: Option<u64>,
-            pub trigger_protect: Decimal,
-            pub filters: Vec<Filters>,
-            pub order_types: Vec<OrderType>,
-            pub time_in_force: Vec<TimeInForce>,
-        }
-
-        // Deserialize into the temporary struct
-        let temp = TempObject::deserialize(deserializer)?;
-
-        let mut symbol_object = Symbol {
-            symbol: temp.symbol,
-            pair: temp.pair,
-            contract_type: temp.contract_type,
-            delivery_date: temp.delivery_date,
-            onboard_date: temp.onboard_date,
-            status: temp.status,
-            maint_margin_percent: temp.maint_margin_percent,
-            required_margin_percent: temp.required_margin_percent,
-            base_asset: temp.base_asset,
-            quote_asset: temp.quote_asset,
-            price_precision: temp.price_precision,
-            quantity_precision: temp.quantity_precision,
-            base_asset_precision: temp.base_asset_precision,
-            quote_precision: temp.quote_precision,
-            underlying_type: temp.underlying_type,
-            underlying_sub_type: temp.underlying_sub_type,
-            settle_plan: temp.settle_plan,
-            trigger_protect: temp.trigger_protect,
-            filters: temp.filters,
-            order_types: temp.order_types,
-            time_in_force: temp.time_in_force,
-            min_order_size: Decimal::ZERO,
-            step_size: Decimal::ZERO,
-            tick_size: Decimal::ZERO,
-            step_scale: 0,
-            tick_scale: 0,
-        };
-        symbol_object.min_order_size = symbol_object.get_min_order_size();
-        symbol_object.tick_size = symbol_object.get_tick_size();
-        symbol_object.step_size = symbol_object.get_step_size();
-        symbol_object.step_scale = symbol_object.step_size.scale();
-        symbol_object.tick_scale = symbol_object.tick_size.scale();
-        Ok(symbol_object)
-    }
 }
 
 impl Symbol {
@@ -534,10 +462,11 @@ pub struct OpenInterest {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AccountTrade {
     pub symbol: String,
     pub id: u64,
-    #[serde(deserialize_with = "deserialize_string_from_number")]
+    #[serde(deserialize_with = "deserialize_string_from_number", default)]
     pub order_id: String,
     pub side: OrderSide,
     pub price: Decimal,

@@ -1,5 +1,5 @@
 use std::sync::atomic::{AtomicBool, Ordering};
-
+use anyhow::anyhow;
 use futures::StreamExt;
 use serde_json::from_str;
 use tokio::net::TcpStream;
@@ -150,7 +150,10 @@ impl<'a, WE: serde::de::DeserializeOwned> WebSockets<'a, WE> {
                         if msg.is_empty() {
                             return Ok(());
                         }
-                        let event: WE = from_str(msg.as_str())?;
+                        let event: WE = match from_str(msg.as_str()) {
+                            Ok(event) => event,
+                            Err(e) => return Err(anyhow!("Failed to parse this string: {msg}. Error: {e:?}").into())
+                        };
                         (self.handler)(event)?;
                     }
                     Message::Ping(_) => {

@@ -1,8 +1,9 @@
 use rust_decimal::Decimal;
+use strum_macros::Display;
 use crate::rest_model::{Asks, Bids, ExecutionType, OrderBook, OrderSide, OrderStatus, OrderType,
                         TimeInForce};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display)]
 #[serde(tag = "e")]
 pub enum WebsocketEvent {
     #[serde(alias = "aggTrade")]
@@ -27,6 +28,25 @@ pub enum WebsocketEvent {
     ListOrderUpdate(Box<OrderListUpdate>),
     #[serde(alias = "markPriceUpdate")]
     MarkPriceUpdate(Box<MarkPriceEvent>),
+    #[serde(alias = "PING")]
+    Ping,
+}
+
+// usually binance futures sends an array but sometimes just a single object
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum OneOrManyWebsocketEvents {
+    One(WebsocketEvent),
+    Many(Vec<WebsocketEvent>),
+}
+
+impl From<OneOrManyWebsocketEvents> for Vec<WebsocketEvent> {
+    fn from(one_or_many: OneOrManyWebsocketEvents) -> Self {
+        match one_or_many {
+            OneOrManyWebsocketEvents::One(event) => vec![event],
+            OneOrManyWebsocketEvents::Many(events) => events,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -111,35 +131,25 @@ pub struct DayTickerEvent {
     #[serde(rename = "s")]
     pub symbol: String,
     #[serde(rename = "p")]
-    pub price_change: String,
+    pub price_change: Decimal,
     #[serde(rename = "P")]
-    pub price_change_percent: String,
+    pub price_change_percent: Decimal,
     #[serde(rename = "w")]
-    pub average_price: String,
-    #[serde(rename = "x")]
-    pub prev_close: String,
+    pub average_price: Decimal,
     #[serde(rename = "c")]
-    pub current_close: String,
+    pub current_close: Decimal,
     #[serde(rename = "Q")]
-    pub current_close_qty: String,
-    #[serde(rename = "b")]
-    pub best_bid: String,
-    #[serde(rename = "B")]
-    pub best_bid_qty: String,
-    #[serde(rename = "a")]
-    pub best_ask: String,
-    #[serde(rename = "A")]
-    pub best_ask_qty: String,
+    pub current_close_qty: Decimal,
     #[serde(rename = "o")]
-    pub open: String,
+    pub open: Decimal,
     #[serde(rename = "h")]
-    pub high: String,
+    pub high: Decimal,
     #[serde(rename = "l")]
-    pub low: String,
+    pub low: Decimal,
     #[serde(rename = "v")]
-    pub volume: String,
+    pub volume: Decimal,
     #[serde(rename = "q")]
-    pub quote_volume: String,
+    pub quote_volume: Decimal,
     #[serde(rename = "O")]
     pub open_time: u64,
     #[serde(rename = "C")]

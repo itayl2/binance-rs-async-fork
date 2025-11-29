@@ -60,6 +60,10 @@ where
         }
     }
     
+    pub fn remove(&mut self, item: &TopNEntry<T>) -> bool {
+        self.set.remove(item)
+    }
+    
     pub fn get_set_json(&self) -> errors::Result<String> {
         match serde_json::to_string(&self.set) {
             Ok(json) => Ok(json),

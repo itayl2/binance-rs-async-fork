@@ -28,6 +28,16 @@ fn get_file_path(order_symbol: &OrderSymbol) -> PathBuf {
     PathBuf::from(format!("order_tracker_{}.json", order_symbol))
 }
 
+pub fn remove_order_tracking_item(order_symbol: &OrderSymbol, item: &TopNEntry<OrderTrackingItem>) {
+    if let Some(mut top_n) = SYMBOL_ORDER_TRACKING.get_mut(order_symbol) {
+        if !top_n.remove(item) {
+            eprintln!("item {item:?} not found in {order_symbol} tracker so cannot remove it")
+        }
+    } else {
+        eprintln!("symbol {order_symbol} not found in tracker map so cannot remove item: {item:?}")
+    }
+}
+
 pub fn add_order_tracking_item(order_request: &OrderRequest) -> Result<TopNEntry<OrderTrackingItem>> {
     let symbol = order_request.symbol.clone();
     let file_path = get_file_path(&symbol);

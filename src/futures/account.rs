@@ -11,7 +11,7 @@ use std::fmt;
 use anyhow::anyhow;
 use rust_decimal::Decimal;
 use crate::futures::utils::expected_order_requests::rules_map::validate_order_request;
-use crate::futures::utils::order_tracker::add_order_tracking_item;
+use crate::futures::utils::order_tracker::{add_order_tracking_item, remove_order_tracking_item};
 
 #[derive(Clone, Debug)]
 pub struct FuturesAccount {
@@ -209,7 +209,13 @@ impl FuturesAccount {
     #[cfg(not(feature = "backtest"))]
     pub async fn place_order(&self, order: OrderRequest) -> Result<Transaction> {
         let top_n_entry = add_order_tracking_item(&order)?;
-        let validated_rules = validate_order_request(&order.symbol, &top_n_entry)?;
+        let validated_rules = match validate_order_request(&order.symbol, &top_n_entry) {
+            Ok(rules) => rules,
+            Err(error) => {
+                remove_order_tracking_item(&order.symbol, &top_n_entry);
+                return Err(error);
+            }
+        };
         if validated_rules.is_empty() {
             return Err(anyhow!("Expected some validated rule but got none").into());
         }
@@ -227,7 +233,13 @@ impl FuturesAccount {
     #[cfg(not(feature = "backtest"))]
     pub async fn place_order_with_key(&self, order: OrderRequest, private_key: &str) -> Result<Transaction> {
         let top_n_entry = add_order_tracking_item(&order)?;
-        let validated_rules = validate_order_request(&order.symbol, &top_n_entry)?;
+        let validated_rules = match validate_order_request(&order.symbol, &top_n_entry) {
+            Ok(rules) => rules,
+            Err(error) => {
+                remove_order_tracking_item(&order.symbol, &top_n_entry);
+                return Err(error);
+            }
+        };
         if validated_rules.is_empty() {
             return Err(anyhow!("Expected some validated rule but got none").into());
         }

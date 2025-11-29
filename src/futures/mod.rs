@@ -6,3 +6,4 @@ pub mod userstream;
 pub mod websockets;
 pub mod ws_model;
 pub mod serde;
+pub mod utils;

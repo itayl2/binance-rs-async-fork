@@ -468,6 +468,18 @@ pub enum OrderSide {
     Sell,
 }
 
+impl Ord for OrderSide {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.to_string().cmp(&other.to_string())
+    }
+}
+
+impl PartialOrd for OrderSide {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 /// By default, buy
 impl Default for OrderSide {
     fn default() -> Self { Self::Buy }

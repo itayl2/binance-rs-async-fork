@@ -11,7 +11,7 @@ use chrono::{DateTime, MappedLocalTime, TimeZone, Utc};
 use rust_decimal::prelude::ToPrimitive;
 use crate::futures::ws_model::{OrderTradeUpdate, WebsocketOrder};
 use crate::errors::Result as WrappedResult;
-
+use crate::futures::utils::expected_order_requests::rule::ExpectedOrderRequestsRule;
 
 #[cfg(not(feature = "backtest"))]
 pub type CanceledOrderResponse = CanceledOrder;
@@ -791,6 +791,8 @@ pub struct Transaction {
     pub update_time: u64,
     pub working_type: WorkingType,
     price_protect: bool,
+    #[serde(default)]
+    pub validated_rules: Vec<ExpectedOrderRequestsRule>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -1,5 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
-use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrderResponse, ChangeLeverageResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, AccountInformationV3, AccountTrade, CanceledOrderResponse, Order, Position, PositionSide, PositionV3, SupportedOrderType, Symbol, Transaction, WorkingType};
 use crate::account::{OrderCancellation, OrderCancellationWithU64};
 use crate::client::Client;
 use crate::errors::*;
@@ -8,7 +8,10 @@ use crate::rest_model::{PairAndWindowQuery, PairQuery};
 use crate::util::*;
 use serde::Serializer;
 use std::fmt;
+use anyhow::anyhow;
 use rust_decimal::Decimal;
+use crate::futures::utils::expected_order_requests::rules_map::validate_order_request;
+use crate::futures::utils::order_tracker::add_order_tracking_item;
 
 #[derive(Clone, Debug)]
 pub struct FuturesAccount {
@@ -126,6 +129,29 @@ pub struct OrderRequestMandatoryClientId {
     pub new_client_order_id: String,
 }
 
+impl Default for OrderRequestMandatoryClientId {
+    fn default() -> Self {
+        Self {
+            symbol: String::default(),
+            side: OrderSide::Buy,
+            position_side: None,
+            order_type: SupportedOrderType::Limit,
+            time_in_force: None,
+            quantity: None,
+            reduce_only: None,
+            price: None,
+            intended_price: Decimal::ZERO,
+            stop_price: None,
+            close_position: None,
+            activation_price: None,
+            callback_rate: None,
+            working_type: None,
+            price_protect: None,
+            new_client_order_id: String::default(),
+        }
+    }
+}
+
 impl OrderRequestMandatoryClientId {
     pub fn has_stop_price(&self) -> bool {
         self.stop_price.is_some()
@@ -164,12 +190,12 @@ impl OrderRequestMandatoryClientId {
     }
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct ChangePositionModeRequest {
-    #[serde(serialize_with = "serialize_as_str")]
-    pub dual_side_position: bool,
-}
+// #[derive(Serialize)]
+// #[serde(rename_all = "camelCase")]
+// struct ChangePositionModeRequest {
+//     #[serde(serialize_with = "serialize_as_str")]
+//     pub dual_side_position: bool,
+// }
 
 impl FuturesAccount {
     /// Get an order
@@ -182,16 +208,38 @@ impl FuturesAccount {
     /// Place an order
     #[cfg(not(feature = "backtest"))]
     pub async fn place_order(&self, order: OrderRequest) -> Result<Transaction> {
-        self.client
-            .post_signed_p("/fapi/v1/order", order, self.recv_window)
-            .await
+        let top_n_entry = add_order_tracking_item(&order)?;
+        let validated_rules = validate_order_request(&order.symbol, &top_n_entry)?;
+        if validated_rules.is_empty() {
+            return Err(anyhow!("Expected some validated rule but got none").into());
+        }
+        match self.client
+            .post_signed_p::<Transaction, OrderRequest>("/fapi/v1/order", order, self.recv_window)
+            .await {
+            Ok(mut transaction) => {
+                transaction.validated_rules = validated_rules;
+                Ok(transaction)
+            },
+            Err(error) => Err(error)
+        }
     }
 
     #[cfg(not(feature = "backtest"))]
     pub async fn place_order_with_key(&self, order: OrderRequest, private_key: &str) -> Result<Transaction> {
-        self.client
-            .post_signed_p_with_key("/fapi/v1/order", order, self.recv_window, private_key)
-            .await
+        let top_n_entry = add_order_tracking_item(&order)?;
+        let validated_rules = validate_order_request(&order.symbol, &top_n_entry)?;
+        if validated_rules.is_empty() {
+            return Err(anyhow!("Expected some validated rule but got none").into());
+        }
+        match self.client
+            .post_signed_p_with_key::<Transaction, OrderRequest>("/fapi/v1/order", order, self.recv_window, private_key)
+            .await {
+            Ok(mut transaction) => {
+                transaction.validated_rules = validated_rules;
+                Ok(transaction)
+            },
+            Err(error) => Err(error)
+        }
     }
 
 
@@ -434,30 +482,32 @@ impl FuturesAccount {
         self.client.get_signed_d("/fapi/v2/balance", request.as_str()).await
     }
 
-    /// Change the initial leverage for the symbol
-    pub async fn change_initial_leverage<S>(&self, symbol: S, leverage: u8) -> Result<ChangeLeverageResponse>
-    where
-        S: Into<String>,
-    {
-        let mut parameters: BTreeMap<String, String> = BTreeMap::new();
-        parameters.insert("symbol".into(), symbol.into());
-        parameters.insert("leverage".into(), leverage.to_string());
+    // commented out to be safe since I don't expect to use it
+    // /// Change the initial leverage for the symbol
+    // pub async fn change_initial_leverage<S>(&self, symbol: S, leverage: u8) -> Result<ChangeLeverageResponse>
+    // where
+    //     S: Into<String>,
+    // {
+    //     let mut parameters: BTreeMap<String, String> = BTreeMap::new();
+    //     parameters.insert("symbol".into(), symbol.into());
+    //     parameters.insert("leverage".into(), leverage.to_string());
+    // 
+    //     let request = build_signed_request(parameters, self.recv_window)?;
+    //     self.client.post_signed_d("/fapi/v1/leverage", request.as_str()).await
+    // }
 
-        let request = build_signed_request(parameters, self.recv_window)?;
-        self.client.post_signed_d("/fapi/v1/leverage", request.as_str()).await
-    }
-
+    // commented out to be safe since I don't expect to use it
     /// Change the dual position side
-    pub async fn change_position_mode(&self, dual_side_position: bool) -> Result<()> {
-        self.client
-            .post_signed_p(
-                "/fapi/v1/positionSide/dual",
-                ChangePositionModeRequest { dual_side_position },
-                self.recv_window,
-            )
-            .await?;
-        Ok(())
-    }
+    // pub async fn change_position_mode(&self, dual_side_position: bool) -> Result<()> {
+    //     self.client
+    //         .post_signed_p(
+    //             "/fapi/v1/positionSide/dual",
+    //             ChangePositionModeRequest { dual_side_position },
+    //             self.recv_window,
+    //         )
+    //         .await?;
+    //     Ok(())
+    // }
 
     /// Cancel all open orders on this symbol
     pub async fn cancel_all_open_orders<S>(&self, symbol: S) -> Result<()>

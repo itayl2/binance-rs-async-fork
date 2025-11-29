@@ -61,6 +61,17 @@ pub enum Error {
     Unauthorized,
     #[error("{0}")]
     Msg(String),
+    #[error("ExpectedOrdersRuleViolated: {0}")]
+    ExpectedOrdersRuleViolated(String),
+}
+
+impl Error {
+    pub fn get_msg(&self) -> String {
+        match self {
+            Self::ExpectedOrdersRuleViolated(msg) => msg.clone(),
+            _ => format!("{self:?}"),
+        }
+    }
 }
 
 /// Custom error messages
